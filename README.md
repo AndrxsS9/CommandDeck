@@ -1,34 +1,66 @@
-# CommandDeck v0.1
+# CommandDeck
 
-MVP de escritorio: intención en español → comando → explicación → clasificación de riesgo.
+Aplicación de escritorio en desarrollo que transforma una intención escrita en español en una propuesta de comando, explica su efecto y estima su nivel de riesgo.
 
-## Stack
-- Tauri 2
-- React + TypeScript
+## Estado
+
+- Interfaz funcional con React y TypeScript.
+- Generación simulada de comandos para Git y Docker.
+- Clasificación inicial de riesgo y copia al portapapeles.
+- La ejecución de comandos está deshabilitada intencionalmente; la aplicación no ejecuta las propuestas.
+
+## Tecnologías
+
+- Tauri 2 y Rust
+- React 19 y TypeScript
 - Vite
-- Rust en la capa nativa
 
-## Estado de esta entrega
-- UI funcional
-- Motor de riesgo local inicial
-- Generador simulado para Git/Docker
-- Copiado al portapapeles
-- Ejecución deliberadamente bloqueada hasta implementar el executor seguro
-- Estructura preparada para global shortcut
+## Requisitos
 
-## Requisitos locales
-Instala Node.js y Rust. Para Tauri en Windows/Linux también debes instalar las dependencias del sistema indicadas en la documentación oficial de Tauri.
+- Node.js LTS y npm.
+- Rust estable y Cargo.
+- En Windows: Microsoft C++ Build Tools con la carga **Desarrollo para escritorio con C++** y Windows SDK. VS Code por sí solo no incluye el enlazador `link.exe` que necesita Rust.
+- Dependencias del sistema de Tauri para tu plataforma. Consulta la [guía oficial de prerrequisitos de Tauri](https://v2.tauri.app/start/prerequisites/).
 
-## Ejecutar
+## Desarrollo
+
+Instala las dependencias de JavaScript:
+
 ```bash
-npm install
+npm ci
+```
+
+Para ejecutar solo la interfaz en el navegador:
+
+```bash
+npm run dev
+```
+
+Para ejecutar la aplicación de escritorio:
+
+```bash
 npm run tauri dev
 ```
 
+## Comprobaciones y compilación
+
+```bash
+npm run build
+npm run tauri build
+```
+
+## Estructura
+
+- `src/`: interfaz, servicios y lógica de riesgo.
+- `src-tauri/`: aplicación nativa y configuración de Tauri.
+
 ## Próximos pasos
-1. Conectar proveedor LLM mediante backend Rust o backend remoto seguro.
-2. Exigir salida JSON estructurada.
-3. Añadir validador de comandos y políticas por herramienta.
-4. Implementar executor con allowlist y confirmaciones.
-5. Registrar atajo global y mostrar/ocultar ventana flotante.
-6. Guardar historial local.
+
+- Conectar un proveedor LLM mediante un backend seguro.
+- Validar comandos y definir políticas por herramienta.
+- Implementar ejecución con lista permitida y confirmación explícita.
+- Completar el atajo global y el historial local.
+
+## Licencia
+
+Pendiente de definir. Añade una licencia antes de publicar el proyecto si quieres otorgar permisos de uso, modificación y distribución.
