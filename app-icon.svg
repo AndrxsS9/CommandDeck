@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1c2230"/>
+      <stop offset="100%" stop-color="#0a0d13"/>
+    </linearGradient>
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4a5568"/>
+      <stop offset="100%" stop-color="#1e2330"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#818cf8"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="14" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Background Squircle -->
+  <rect x="32" y="32" width="960" height="960" rx="220" fill="url(#bgGrad)" stroke="url(#borderGrad)" stroke-width="14"/>
+
+  <!-- Inner Terminal Plate -->
+  <rect x="120" y="120" width="784" height="784" rx="130" fill="#0f131c" stroke="#252d3d" stroke-width="8"/>
+
+  <!-- Terminal Header Dots -->
+  <circle cx="205" cy="205" r="16" fill="#ef4444" opacity="0.9"/>
+  <circle cx="255" cy="205" r="16" fill="#f59e0b" opacity="0.9"/>
+  <circle cx="305" cy="205" r="16" fill="#10b981" opacity="0.9"/>
+
+  <!-- Command Deck Prompt '>_' -->
+  <g filter="url(#glow)">
+    <!-- Chevron '>' -->
+    <path d="M 280 390 L 480 530 L 280 670" fill="none" stroke="url(#accentGrad)" stroke-width="60" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Underscore '_' cursor -->
+    <line x1="540" y1="670" x2="720" y2="670" stroke="#f1f5f9" stroke-width="60" stroke-linecap="round"/>
+  </g>
+</svg>
