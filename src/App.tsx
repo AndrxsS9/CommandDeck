@@ -1,7 +1,7 @@
 import { FormEvent, useMemo, useState } from 'react';
 import { writeText } from '@tauri-apps/plugin-clipboard-manager';
 import { RiskBadge } from './components/RiskBadge';
-import { generateCommand } from './services/mockCommandService';
+import { generateCommand } from './services/commandService';
 import type { CommandResult } from './types/command';
 import './styles.css';
 
