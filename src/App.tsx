@@ -22,12 +22,21 @@ function App() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    console.log('BOTÓN GENERAR PRESIONADO');
     if (!intent.trim()) return;
     setLoading(true);
     setStatus('');
+    setResult(null);
     setExpanded(false);
     try {
-      setResult(await generateCommand(intent));
+      console.log('LLAMANDO A generateCommand con intent:', intent);
+      const commandResult = await generateCommand(intent);
+      console.log('RESULTADO RECIBIDO:', commandResult);
+      setResult(commandResult);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error('ERROR GEMINI:', message);
+      setStatus(`Error: ${message}`);
     } finally {
       setLoading(false);
     }
