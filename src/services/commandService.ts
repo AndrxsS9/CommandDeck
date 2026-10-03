@@ -3,7 +3,7 @@ import type {
   RiskLevel,
 } from '../types/command';
 
-import { generateMockSuggestion } from './mockCommandService';
+import { generateLLMSuggestion } from './llmCommandService';
 
 import { assessRisk } from '../utils/riskEngine';
 
@@ -68,7 +68,7 @@ export async function generateCommand(
    * LLM
    */
   const suggestion =
-    await generateMockSuggestion(intent);
+    await generateLLMSuggestion(intent);
 
   /*
    * PASO 2
@@ -95,15 +95,6 @@ export async function generateCommand(
     localAssessment.level
   );
 
-  const riskReasons = [...localAssessment.reasons];
-
-  if (suggestion.suggestedRisk !== localAssessment.level &&
-      riskPriority[suggestion.suggestedRisk] > riskPriority[localAssessment.level]) {
-    riskReasons.push(
-      'El generador ha marcado un riesgo superior al análisis local.'
-    );
-  }
-
   /*
    * PASO 4
    *
@@ -129,7 +120,7 @@ export async function generateCommand(
 
     risk: finalRisk,
 
-    riskReasons,
+    riskReasons: localAssessment.reasons,
 
     reversible:
       localAssessment.reversible,
