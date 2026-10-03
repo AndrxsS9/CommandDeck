@@ -1,42 +1,69 @@
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useMemo, useState, useEffect } from 'react';
 import { writeText } from '@tauri-apps/plugin-clipboard-manager';
-import { RiskBadge } from './components/RiskBadge';
 import { generateCommand } from './services/commandService';
-import type { CommandResult } from './types/command';
+import type { CommandResult, CommandTool } from './types/command';
 import './styles.css';
 
-const examples = [
+import { AppHeader } from './components/AppHeader';
+import { Sidebar } from './components/Sidebar';
+import { ToolSelector } from './components/ToolSelector';
+import { CommandInput } from './components/CommandInput';
+import { CommandResultCard } from './components/CommandResultCard';
+import { RecentCommands } from './components/RecentCommands';
+import { LoadingState } from './components/LoadingState';
+import { ErrorState } from './components/ErrorState';
+
+const suggestions = [
   'Ver las ramas locales de Git',
-  'Detener todos los contenedores Docker activos',
-  'Listar los contenedores Docker',
+  'Detener todos los contenedores Docker',
+  'Listar pods en Kubernetes',
 ];
 
 function App() {
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [activeTab, setActiveTab] = useState('home');
+  const [activeTool, setActiveTool] = useState<CommandTool | 'all'>('git');
+  
   const [intent, setIntent] = useState('');
   const [result, setResult] = useState<CommandResult | null>(null);
   const [loading, setLoading] = useState(false);
-  const [expanded, setExpanded] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
   const [status, setStatus] = useState('');
+  const [copied, setCopied] = useState(false);
 
-  const dangerous = useMemo(() => result?.risk === 'critical' || result?.risk === 'medium', [result]);
+  // Efecto para cambiar el tema en el DOM
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  // Limpiar el estado copiado después de unos segundos
+  useEffect(() => {
+    if (copied) {
+      const timer = setTimeout(() => setCopied(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [copied]);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    console.log('BOTÓN GENERAR PRESIONADO');
     if (!intent.trim()) return;
+    
     setLoading(true);
+    setErrorMsg('');
     setStatus('');
     setResult(null);
-    setExpanded(false);
+    setCopied(false);
+    
     try {
-      console.log('LLAMANDO A generateCommand con intent:', intent);
       const commandResult = await generateCommand(intent);
-      console.log('RESULTADO RECIBIDO:', commandResult);
       setResult(commandResult);
+      if (commandResult.tool && commandResult.tool !== 'unknown') {
+        setActiveTool(commandResult.tool);
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       console.error('ERROR GEMINI:', message);
-      setStatus(`Error: ${message}`);
+      setErrorMsg(message);
     } finally {
       setLoading(false);
     }
@@ -46,103 +73,82 @@ function App() {
     if (!result) return;
     try {
       await writeText(result.command);
+      setCopied(true);
       setStatus('Comando copiado al portapapeles.');
     } catch {
       await navigator.clipboard.writeText(result.command);
+      setCopied(true);
       setStatus('Comando copiado al portapapeles.');
     }
   }
 
-  function requestExecution() {
-    if (!result) return;
-    setStatus(
-      dangerous
-        ? 'Ejecución bloqueada en el prototipo: primero implementaremos confirmación y executor seguro.'
-        : 'Executor aún no conectado. Esta versión protege contra ejecución accidental.'
-    );
-  }
-
   return (
-    <main className="shell">
-      <section className="deck" aria-label="CommandDeck">
-        <header className="brand-row">
-          <div className="brand-mark">&gt;_</div>
-          <div>
-            <strong>CommandDeck</strong>
-            <span>Intent → Command</span>
-          </div>
-          <kbd>Alt + Space</kbd>
-        </header>
+    <div className="app-layout">
+      <AppHeader 
+        theme={theme} 
+        onToggleTheme={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} 
+      />
 
-        <form className="intent-form" onSubmit={handleSubmit}>
-          <span className="prompt">›</span>
-          <input
-            autoFocus
-            value={intent}
-            onChange={(e) => setIntent(e.target.value)}
-            placeholder="Describe lo que quieres hacer…"
-            aria-label="Describe tu intención"
-          />
-          <button type="submit" disabled={loading || !intent.trim()}>
-            {loading ? 'Pensando…' : 'Generar'}
-          </button>
-        </form>
+      <div className="app-body">
+        <Sidebar activeItem={activeTab} onSelectItem={setActiveTab} />
 
-        {!result && !loading && (
-          <div className="empty-state">
-            <p>Escribe una intención en español. CommandDeck la convertirá en una instrucción revisable antes de cualquier acción.</p>
-            <div className="chips">
-              {examples.map((example) => (
-                <button key={example} onClick={() => setIntent(example)}>{example}</button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {loading && <div className="loading-card">Analizando intención y construyendo comando…</div>}
-
-        {result && !loading && (
-          <article className={`result-card risk-frame-${result.risk}`}>
-            <div className="result-meta">
-              <span className="tool-pill">{result.tool.toUpperCase()}</span>
-              <RiskBadge level={result.risk} />
-            </div>
-
-            <pre className="command"><code>{result.command}</code></pre>
-            <p className="summary">{result.summary}</p>
-
-            {result.riskReasons.length > 0 && (
-              <div className="risk-note">
-                <strong>{dangerous ? 'Revisa antes de continuar.' : 'Evaluación previa'}</strong>
-                <span>{result.riskReasons.join(' ')}</span>
-              </div>
-            )}
-
-            <button className="explain-toggle" onClick={() => setExpanded((value) => !value)}>
-              {expanded ? 'Ocultar explicación' : '¿Cómo funciona?'}
-            </button>
-
-            {expanded && (
-              <ol className="explanation">
-                {result.explanation.map((item) => <li key={item}>{item}</li>)}
-              </ol>
-            )}
-
-            <footer className="actions">
-              <button className="secondary" onClick={() => { setResult(null); setStatus(''); }}>Nueva consulta</button>
+        <main className="main-content">
+          <div className="main-content__inner">
+            <div className="workspace-header">
               <div>
-                <button className="secondary" onClick={copyCommand}>Copiar</button>
-                <button className={dangerous ? 'danger' : 'primary'} onClick={requestExecution}>
-                  {dangerous ? 'Revisar ejecución' : 'Ejecutar'}
-                </button>
+                <h1 className="workspace-header__title">Asistente IA de Terminal</h1>
+                <p className="workspace-header__subtitle">
+                  Genera, analiza el riesgo e inspecciona comandos de infraestructura.
+                </p>
               </div>
-            </footer>
-          </article>
-        )}
+              <ToolSelector activeTool={activeTool} onSelectTool={setActiveTool} />
+            </div>
 
-        {status && <div className="status" role="status">{status}</div>}
-      </section>
-    </main>
+            <CommandInput
+              intent={intent}
+              onIntentChange={setIntent}
+              onSubmit={handleSubmit}
+              loading={loading}
+              suggestions={suggestions}
+              onSuggestionClick={(s) => setIntent(s)}
+            />
+
+            {loading && <LoadingState />}
+            
+            {errorMsg && (
+              <ErrorState message={errorMsg} onRetry={() => handleSubmit({ preventDefault: () => {} } as FormEvent)} />
+            )}
+
+            {result && !loading && !errorMsg && (
+              <CommandResultCard 
+                result={result}
+                onCopy={copyCommand}
+                onNewQuery={() => {
+                  setResult(null);
+                  setIntent('');
+                }}
+                copied={copied}
+              />
+            )}
+
+            {!result && !loading && !errorMsg && (
+              <div className="empty-state">
+                <p className="empty-state__text">
+                  Escribe una intención en español. CommandDeck la convertirá en un comando
+                  seguro y te mostrará un desglose antes de ejecutarlo.
+                </p>
+              </div>
+            )}
+            
+            {status && (
+              <div className="status-bar">{status}</div>
+            )}
+          </div>
+        </main>
+
+        <RecentCommands onReuse={(cmd) => setIntent(cmd)} />
+      </div>
+    </div>
   );
 }
 
