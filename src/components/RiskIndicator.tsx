@@ -1,4 +1,5 @@
 import type { RiskLevel } from '../types/command';
+import type { ReactNode } from 'react';
 
 const riskLabels: Record<RiskLevel, string> = {
   read: 'Lectura',
@@ -14,7 +15,7 @@ const riskMessages: Record<RiskLevel, string> = {
   critical: 'Acción crítica',
 };
 
-const riskIcons: Record<RiskLevel, JSX.Element> = {
+const riskIcons: Record<RiskLevel, ReactNode> = {
   read: (
     <svg fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="20 6 9 17 4 12" />

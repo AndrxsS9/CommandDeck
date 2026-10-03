@@ -1,11 +1,12 @@
 import type { CommandTool } from '../types/command';
+import type { ReactNode } from 'react';
 
 interface ToolSelectorProps {
   activeTool: CommandTool | 'all';
   onSelectTool: (tool: CommandTool | 'all') => void;
 }
 
-const tools: { id: CommandTool | 'all'; label: string; disabled?: boolean; icon: JSX.Element }[] = [
+const tools: { id: CommandTool | 'all'; label: string; disabled?: boolean; icon: ReactNode }[] = [
   {
     id: 'git',
     label: 'Git',

@@ -1,4 +1,5 @@
 import type { CommandTool } from '../types/command';
+import type { ReactNode } from 'react';
 
 interface RecentCommand {
   id: string;
@@ -14,7 +15,7 @@ const mockRecentCommands: RecentCommand[] = [
   { id: '4', tool: 'system', command: 'ls -la --color=auto', desc: 'Listado detallado con permisos' },
 ];
 
-const toolIcons: Record<string, JSX.Element> = {
+const toolIcons: Record<string, ReactNode> = {
   git: (
     <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
       <line x1="6" y1="3" x2="6" y2="15" />
