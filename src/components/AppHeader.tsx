@@ -20,22 +20,12 @@ export function AppHeader({ theme, onToggleTheme }: AppHeaderProps) {
         <span className="app-header__version">v0.1</span>
       </div>
 
-      {/* Search (visual, no funcional aún) */}
+      {/* Info HotKey */}
       <div className="app-header__search">
-        <div className="app-header__search-wrapper">
-          <div className="app-header__search-icon">
-            <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-          </div>
-          <input
-            type="text"
-            className="app-header__search-input"
-            placeholder="Buscar comando o solicitar en lenguaje natural..."
-            readOnly
-          />
-          <kbd className="app-header__search-kbd">/</kbd>
+        <div className="app-header__search-wrapper" style={{ background: 'transparent', border: 'none' }}>
+          <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>
+            Alt + Space para abrir CommandDeck
+          </span>
         </div>
       </div>
 
@@ -44,7 +34,7 @@ export function AppHeader({ theme, onToggleTheme }: AppHeaderProps) {
         <ThemeToggle theme={theme} onToggle={onToggleTheme} />
         <div className="app-header__status">
           <span className="status-dot" />
-          <span className="app-header__status-text">Online</span>
+          <span className="app-header__status-text">CommandDeck listo</span>
         </div>
       </div>
     </header>
