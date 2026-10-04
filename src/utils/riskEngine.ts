@@ -13,11 +13,13 @@ const destructivePatterns = [
   // Linux
   /\brm\s+(?:-[a-z]*r[a-z]*|--recursive)\b/i,
   /\brm\s+(?:-[a-z]*f[a-z]*|--force)\b/i,
+  /\brm\s+(?!-)\S+/i, // Eliminación simple Linux
 
   // Windows PowerShell
   /\bRemove-Item\b.*-Recurse\b.*-Force\b/i,
   /\bRemove-Item\b.*-Force\b.*-Recurse\b/i,
   /\bRemove-Item\b.*-Force\b/i,
+  /\bRemove-Item\s+(?!-)\S+/i, // Eliminación simple PowerShell
   /\bStop-Process\b.*-Force\b/i,
   /\bFormat-Volume\b/i,
   /\bClear-Disk\b/i,
@@ -26,10 +28,13 @@ const destructivePatterns = [
   // Windows CMD
   /\bdel\b.*\s+\/s\b.*\s+\/q\b/i,
   /\bdel\b.*\s+\/q\b.*\s+\/s\b/i,
+  /\bdel\s+(?!\/)\S+/i, // Eliminación simple CMD
   /\brmdir\b.*\s+\/s\b.*\s+\/q\b/i,
   /\brmdir\b.*\s+\/q\b.*\s+\/s\b/i,
+  /\brmdir\s+(?!\/)\S+/i,
   /\brd\b.*\s+\/s\b.*\s+\/q\b/i,
   /\brd\b.*\s+\/q\b.*\s+\/s\b/i,
+  /\brd\s+(?!\/)\S+/i,
   /\btaskkill\b.*\s+\/F\b/i,
 
   // Filesystem general
