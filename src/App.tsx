@@ -95,12 +95,32 @@ function App() {
     }
   }
 
+  const historyRef = useRef<HTMLElement>(null);
+
   function handleSidebarSelection(id: string) {
+    if (id === 'history') {
+      historyRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest'
+      });
+      return;
+    }
+
     setActiveTab(id);
     if (id === 'home') setActiveTool('all');
     else if (id === 'git') setActiveTool('git');
     else if (id === 'docker') setActiveTool('docker');
+    else if (id === 'kubernetes') setActiveTool('kubernetes');
     else if (id === 'system') setActiveTool('system');
+  }
+
+  function handleToolSelection(tool: CommandTool | 'all') {
+    setActiveTool(tool);
+    if (tool === 'all') setActiveTab('home');
+    else if (tool === 'git') setActiveTab('git');
+    else if (tool === 'docker') setActiveTab('docker');
+    else if (tool === 'kubernetes') setActiveTab('kubernetes');
+    else if (tool === 'system') setActiveTab('system');
   }
 
   return (
@@ -122,7 +142,7 @@ function App() {
                   Genera, analiza el riesgo e inspecciona comandos de infraestructura.
                 </p>
               </div>
-              <ToolSelector activeTool={activeTool} onSelectTool={setActiveTool} />
+              <ToolSelector activeTool={activeTool} onSelectTool={handleToolSelection} />
             </div>
 
             <CommandInput
@@ -167,7 +187,7 @@ function App() {
           </div>
         </main>
 
-        <RecentCommands onReuse={(cmd) => {
+        <RecentCommands ref={historyRef} onReuse={(cmd) => {
           setIntent(cmd);
           setActiveTool('all');
         }} />
