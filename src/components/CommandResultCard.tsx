@@ -1,21 +1,29 @@
-import type { CommandResult } from '../types/command';
+import type { CommandResult, PlatformContext } from '../types/command';
 import { CommandExplanation } from './CommandExplanation';
 import { RiskIndicator } from './RiskIndicator';
 
 interface CommandResultCardProps {
-  result: CommandResult;
+  result: CommandResult & { platformContext?: PlatformContext };
   onCopy: () => void;
   onNewQuery: () => void;
   copied: boolean;
 }
 
 export function CommandResultCard({ result, onCopy, onNewQuery, copied }: CommandResultCardProps) {
+  const getPlatformLabel = () => {
+    if (!result.platformContext) return 'Bash / Zsh';
+    const { os, shell } = result.platformContext;
+    const osName = os === 'windows' ? 'Windows' : os === 'macos' ? 'macOS' : 'Linux';
+    const shellName = shell === 'powershell' ? 'PowerShell' : shell === 'cmd' ? 'CMD' : shell === 'zsh' ? 'Zsh' : 'Bash';
+    return `${osName} / ${shellName}`;
+  };
+
   return (
     <section className="command-result">
       {/* Header */}
       <div className="command-result__header">
         <span className="command-result__label">Resultado Generado</span>
-        <span className="command-result__shell-tag">Bash / Zsh</span>
+        <span className="command-result__shell-tag">{getPlatformLabel()}</span>
       </div>
 
       {/* Terminal box */}

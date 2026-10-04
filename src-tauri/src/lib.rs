@@ -1,22 +1,77 @@
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use tauri::{Manager, Emitter};
+use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
+
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+enum RiskLevel {
+    Read,
+    Low,
+    Medium,
+    Critical,
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+enum CommandTool {
+    Git,
+    Docker,
+    System,
+    Unknown,
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct CommandSuggestion {
     intent: String,
     command: String,
-    tool: String,
+    tool: CommandTool,
     summary: String,
     explanation: Vec<String>,
-    suggested_risk: String,
+    suggested_risk: RiskLevel,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct PlatformContext {
+    os: String,
+    shell: String,
 }
 
 const GEMINI_MODEL: &str = "gemini-3.5-flash-lite";
 
 #[tauri::command]
+fn get_platform_context() -> PlatformContext {
+    let os = std::env::consts::OS;
+    
+    // Simplistic shell detection
+    let shell = if os == "windows" {
+        // En Windows el shell por defecto más común actualmente suele ser powershell
+        // o podemos verificar variables de entorno (COMSPEC o PSModulePath)
+        if std::env::var("PSModulePath").is_ok() {
+            "powershell".to_string()
+        } else {
+            "cmd".to_string()
+        }
+    } else if os == "macos" {
+        "zsh".to_string()
+    } else {
+        "bash".to_string()
+    };
+    
+    PlatformContext {
+        os: os.to_string(),
+        shell,
+    }
+}
+
+#[tauri::command]
 async fn generate_command_with_ai(
     intent: String,
+    platform: String,
+    shell: String,
+    preferred_tool: String,
 ) -> Result<CommandSuggestion, String> {
 
     println!("LLAMANDO A GEMINI — intent recibido: {}", intent);
@@ -54,27 +109,15 @@ CommandDeck está orientado inicialmente a:
 Reglas:
 
 1. Genera exactamente un comando principal.
-
 2. No ejecutes ningún comando.
-
 3. No inventes resultados de terminal.
-
 4. Explica brevemente qué hará el comando.
-
 5. Divide las partes relevantes del comando en explicaciones cortas.
-
 6. Clasifica provisionalmente el riesgo como:
-
-read
-low
-medium
-critical
-
+   read, low, medium, critical
 7. Tu clasificación de riesgo NO es definitiva.
-CommandDeck utiliza un motor de seguridad independiente.
-
-8. Si no puedes determinar un comando razonable,
-utiliza tool = "unknown".
+8. Si no puedes determinar un comando razonable, utiliza tool = "unknown".
+9. Ten en cuenta el sistema operativo, la shell y la herramienta preferida proporcionada para generar un comando compatible y exacto.
 
 Devuelve únicamente JSON válido.
 
@@ -98,8 +141,11 @@ La estructura debe ser exactamente:
      * con la petición del usuario.
      */
     let prompt = format!(
-        "{}\n\nPetición del usuario:\n{}",
+        "{}\n\nContexto:\nSistema Operativo: {}\nShell: {}\nHerramienta preferida: {}\n\nPetición del usuario:\n{}",
         system_prompt,
+        platform,
+        shell,
+        preferred_tool,
         intent
     );
 
@@ -250,26 +296,50 @@ La estructura debe ser exactamente:
 pub fn run() {
 
     tauri::Builder::default()
-
         .plugin(
             tauri_plugin_clipboard_manager::init()
         )
-
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
+                .with_handler(|app, shortcut, event| {
+                    if event.state() == ShortcutState::Pressed {
+                        if let Some(window) = app.get_webview_window("main") {
+                            // Mostrar ventana
+                            let _ = window.show();
+                            // Desminimizar si está minimizada
+                            if let Ok(is_minimized) = window.is_minimized() {
+                                if is_minimized {
+                                    let _ = window.unminimize();
+                                }
+                            }
+                            // Traer al frente y dar foco
+                            let _ = window.set_focus();
+                            
+                            // Emitimos evento para enfocar el input en react
+                            let _ = window.emit("focus-input", ());
+                        }
+                    }
+                })
                 .build()
         )
-
+        .setup(|app| {
+            // Register hotkey Alt+Space
+            #[cfg(desktop)]
+            {
+                let shortcut = Shortcut::new(Some(tauri_plugin_global_shortcut::Modifiers::ALT), tauri_plugin_global_shortcut::Code::Space);
+                let _ = app.global_shortcut().register(shortcut);
+            }
+            Ok(())
+        })
         .invoke_handler(
             tauri::generate_handler![
-                generate_command_with_ai
+                generate_command_with_ai,
+                get_platform_context
             ]
         )
-
         .run(
             tauri::generate_context!()
         )
-
         .expect(
             "error while running tauri application"
         );

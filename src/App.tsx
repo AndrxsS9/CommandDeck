@@ -1,7 +1,8 @@
-import { FormEvent, useMemo, useState, useEffect } from 'react';
+import { FormEvent, useMemo, useState, useEffect, useRef } from 'react';
 import { writeText } from '@tauri-apps/plugin-clipboard-manager';
+import { listen } from '@tauri-apps/api/event';
 import { generateCommand } from './services/commandService';
-import type { CommandResult, CommandTool } from './types/command';
+import type { CommandResult, CommandTool, PlatformContext } from './types/command';
 import './styles.css';
 
 import { AppHeader } from './components/AppHeader';
@@ -25,7 +26,7 @@ function App() {
   const [activeTool, setActiveTool] = useState<CommandTool | 'all'>('git');
   
   const [intent, setIntent] = useState('');
-  const [result, setResult] = useState<CommandResult | null>(null);
+  const [result, setResult] = useState<(CommandResult & { platformContext: PlatformContext }) | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [status, setStatus] = useState('');
@@ -35,6 +36,21 @@ function App() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+
+  // Listener para enfocar el input desde Tauri
+  useEffect(() => {
+    const unlisten = listen('focus-input', () => {
+      const input = document.querySelector('.command-input__field') as HTMLInputElement;
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    });
+    
+    return () => {
+      unlisten.then(f => f());
+    };
+  }, []);
 
   // Limpiar el estado copiado después de unos segundos
   useEffect(() => {
@@ -55,7 +71,7 @@ function App() {
     setCopied(false);
     
     try {
-      const commandResult = await generateCommand(intent);
+      const commandResult = await generateCommand(intent, activeTool);
       setResult(commandResult);
       if (commandResult.tool && commandResult.tool !== 'unknown') {
         setActiveTool(commandResult.tool);
@@ -134,8 +150,7 @@ function App() {
             {!result && !loading && !errorMsg && (
               <div className="empty-state">
                 <p className="empty-state__text">
-                  Escribe una intención en español. CommandDeck la convertirá en un comando
-                  seguro y te mostrará un desglose antes de ejecutarlo.
+                  Escribe una intención en español. CommandDeck la convertirá en una propuesta de comando y evaluará su nivel de riesgo antes de cualquier acción.
                 </p>
               </div>
             )}

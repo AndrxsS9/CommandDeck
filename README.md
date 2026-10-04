@@ -1,66 +1,59 @@
-# CommandDeck
+# CommandDeck - Asistente IA de Terminal
 
-Aplicación de escritorio en desarrollo que transforma una intención escrita en español en una propuesta de comando, explica su efecto y estima su nivel de riesgo.
+Aplicación de escritorio construida con Tauri, React y Rust, diseñada para convertir intenciones en lenguaje natural a comandos seguros de terminal usando Gemini API.
 
-## Estado
+## Arquitectura Actual
 
-- Interfaz funcional con React y TypeScript.
-- Generación simulada de comandos para Git y Docker.
-- Clasificación inicial de riesgo y copia al portapapeles.
-- La ejecución de comandos está deshabilitada intencionalmente; la aplicación no ejecuta las propuestas.
-
-## Tecnologías
-
-- Tauri 2 y Rust
-- React 19 y TypeScript
-- Vite
-
-## Requisitos
-
-- Node.js LTS y npm.
-- Rust estable y Cargo.
-- En Windows: Microsoft C++ Build Tools con la carga **Desarrollo para escritorio con C++** y Windows SDK. VS Code por sí solo no incluye el enlazador `link.exe` que necesita Rust.
-- Dependencias del sistema de Tauri para tu plataforma. Consulta la [guía oficial de prerrequisitos de Tauri](https://v2.tauri.app/start/prerequisites/).
-
-## Desarrollo
-
-Instala las dependencias de JavaScript:
-
-```bash
-npm ci
+```text
+Usuario
+  ↓
+React (UI)
+  ↓
+CommandService (Orquestador)
+  ↓
+PlatformContext (Detección de OS/Shell)
+  ↓
+LLM Service (Cliente Gemini)
+  ↓
+Tauri / Rust (Backend nativo)
+  ↓
+Gemini API (Generación)
+  ↓
+Risk Engine (Validación local de seguridad)
+  ↓
+Historial local
 ```
 
-Para ejecutar solo la interfaz en el navegador:
+## Características (MVP - Sprint 02)
 
-```bash
-npm run dev
-```
+- **Generación impulsada por Gemini**: Convierte comandos en español a scripts de terminal.
+- **Detección de Plataforma Real**: Detecta automáticamente el sistema operativo y el shell subyacente para proporcionar el contexto correcto.
+- **Motor de Riesgo Mejorado**: Evalúa localmente la seguridad de los comandos generados, con soporte extendido para Windows (PowerShell/CMD) y Docker, y pruebas unitarias.
+- **Historial Local**: Almacenamiento persistente de los últimos comandos generados.
+- **Atajo Global**: Integración de HotKey (Alt+Space) para acceder rápidamente al asistente.
+- **Selector de Herramientas**: Filtra explícitamente el contexto a herramientas soportadas (Git, Docker, Sistema).
+- *Kubernetes: Próximamente*.
+- *Ejecución: Actualmente deshabilitada (sólo copiar al portapapeles).*
 
-Para ejecutar la aplicación de escritorio:
+## Stack Tecnológico
 
-```bash
-npm run tauri dev
-```
+- **Frontend**: React 18, TypeScript, Vite
+- **Backend**: Rust, Tauri 2
+- **Seguridad**: Motor heurístico local independiente
+- **IA**: Gemini 3.5 Flash-Lite (Google AI Studio)
 
-## Comprobaciones y compilación
+## Cómo ejecutar localmente
 
-```bash
-npm run build
-npm run tauri build
-```
+1. Configura tu variable de entorno:
+   `GEMINI_API_KEY=tu_clave_aqui`
 
-## Estructura
+2. Instala dependencias:
+   `npm install`
 
-- `src/`: interfaz, servicios y lógica de riesgo.
-- `src-tauri/`: aplicación nativa y configuración de Tauri.
+3. Inicia en modo desarrollo con Tauri:
+   `npm run tauri dev`
 
-## Próximos pasos
+## Pruebas
 
-- Conectar un proveedor LLM mediante un backend seguro.
-- Validar comandos y definir políticas por herramienta.
-- Implementar ejecución con lista permitida y confirmación explícita.
-- Completar el atajo global y el historial local.
-
-## Licencia
-
-Pendiente de definir. Añade una licencia antes de publicar el proyecto si quieres otorgar permisos de uso, modificación y distribución.
+Para ejecutar las pruebas del motor de riesgos:
+`npx vitest run`
