@@ -2,6 +2,8 @@ import { invoke } from '@tauri-apps/api/core';
 
 import type {
   CommandSuggestion,
+  PlatformContext,
+  CommandTool
 } from '../types/command';
 
 /**
@@ -17,8 +19,22 @@ function isTauriRuntime(): boolean {
     && '__TAURI_INTERNALS__' in window;
 }
 
+export async function getPlatformContext(): Promise<PlatformContext> {
+  if (!isTauriRuntime()) {
+    return { os: 'unknown', shell: 'unknown' };
+  }
+  try {
+    return await invoke<PlatformContext>('get_platform_context');
+  } catch (err) {
+    console.warn("Failed to get platform context", err);
+    return { os: 'unknown', shell: 'unknown' };
+  }
+}
+
 export async function generateLLMSuggestion(
-  intent: string
+  intent: string,
+  platformContext: PlatformContext,
+  preferredTool: CommandTool | 'all'
 ): Promise<CommandSuggestion> {
 
   const insideTauri = isTauriRuntime();
@@ -39,6 +55,9 @@ export async function generateLLMSuggestion(
       'generate_command_with_ai',
       {
         intent,
+        platform: platformContext.os,
+        shell: platformContext.shell,
+        preferredTool: preferredTool === 'all' ? 'unknown' : preferredTool
       }
     );
 
