@@ -72,4 +72,36 @@ describe('Risk Engine', () => {
     const result2 = assessRisk('echo test ; Remove-Item ./build -Force -Recurse');
     expect(result2.level).toBe('critical');
   });
+
+  // --- Falsos positivos de Format ---
+  it('evita falsos positivos de format en comandos no destructivos', () => {
+    expect(assessRisk('git log --format=oneline').level).toBe('read');
+    expect(assessRisk('git log --pretty=format:"%h %s"').level).toBe('read');
+    expect(assessRisk('docker inspect --format "{{.Id}}" container').level).toBe('read');
+  });
+
+  // --- Format Destructivo ---
+  it('detecta comandos format destructivos en Windows', () => {
+    expect(assessRisk('format C:').level).toBe('critical');
+    expect(assessRisk('format D: /FS:NTFS').level).toBe('critical');
+  });
+
+  // --- Git Push ---
+  it('detecta git push force como critico', () => {
+    const res1 = assessRisk('git push --force origin main');
+    expect(res1.level).toBe('critical');
+    expect(res1.destructive).toBe(true);
+    expect(res1.requiresConfirmation).toBe(true);
+
+    const res2 = assessRisk('git push -f origin main');
+    expect(res2.level).toBe('critical');
+    expect(res2.destructive).toBe(true);
+  });
+
+  it('clasifica git push --force-with-lease como minimo medium', () => {
+    const res = assessRisk('git push --force-with-lease origin main');
+    // Ya que no entra en critical y push está en medium:
+    expect(res.level).not.toBe('read');
+    expect(res.level).not.toBe('low');
+  });
 });
