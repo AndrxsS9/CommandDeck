@@ -15,9 +15,10 @@ import { LoadingState } from './components/LoadingState';
 import { ErrorState } from './components/ErrorState';
 
 const suggestions = [
-  'Mostrar el estado del repositorio Git',
+  'Mostrar las ramas locales de Git',
   'Listar contenedores Docker activos',
-  'Crear una carpeta llamada logs',
+  'Listar los pods de Kubernetes',
+  'Crear una carpeta llamada logs'
 ];
 
 function App() {
@@ -95,17 +96,7 @@ function App() {
     }
   }
 
-  const historyRef = useRef<HTMLElement>(null);
-
   function handleSidebarSelection(id: string) {
-    if (id === 'history') {
-      historyRef.current?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest'
-      });
-      return;
-    }
-
     setActiveTab(id);
     if (id === 'home') setActiveTool('all');
     else if (id === 'git') setActiveTool('git');
@@ -152,7 +143,11 @@ function App() {
               onSubmit={handleSubmit}
               loading={loading}
               suggestions={suggestions}
-              onSuggestionClick={(s) => setIntent(s)}
+              onSuggestionClick={(s) => {
+                setIntent(s);
+                setActiveTool('all');
+                setActiveTab('home');
+              }}
             />
 
             {loading && <LoadingState />}
@@ -187,9 +182,10 @@ function App() {
           </div>
         </main>
 
-        <RecentCommands ref={historyRef} onReuse={(cmd) => {
+        <RecentCommands onReuse={(cmd) => {
           setIntent(cmd);
           setActiveTool('all');
+          setActiveTab('home');
         }} />
       </div>
     </div>
