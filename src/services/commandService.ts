@@ -1,11 +1,14 @@
 import type {
   CommandResult,
   RiskLevel,
+  CommandTool,
+  PlatformContext
 } from '../types/command';
 
-import { generateLLMSuggestion } from './llmCommandService';
+import { generateLLMSuggestion, getPlatformContext } from './llmCommandService';
 
 import { assessRisk } from '../utils/riskEngine';
+import { addHistoryEntry } from './historyService';
 
 /**
  * Jerarquía de riesgo.
@@ -53,8 +56,14 @@ function getHighestRisk(
  * Safety Engine
  */
 export async function generateCommand(
-  intent: string
-): Promise<CommandResult> {
+  intent: string,
+  preferredTool: CommandTool | 'all'
+): Promise<CommandResult & { platformContext: PlatformContext }> {
+
+  /*
+   * Obtenemos el contexto de la plataforma real
+   */
+  const platformContext = await getPlatformContext();
 
   /*
    * PASO 1
@@ -62,13 +71,10 @@ export async function generateCommand(
    * Pedimos una propuesta.
    *
    * Hoy:
-   * Mock
-   *
-   * Después:
-   * LLM
+   * Gemini
    */
   const suggestion =
-    await generateLLMSuggestion(intent);
+    await generateLLMSuggestion(intent, platformContext, preferredTool);
 
   /*
    * PASO 2
@@ -101,7 +107,7 @@ export async function generateCommand(
    * Construimos el objeto definitivo
    * que recibirá la interfaz.
    */
-  return {
+  const finalResult = {
     id: crypto.randomUUID(),
 
     intent: suggestion.intent,
@@ -131,5 +137,18 @@ export async function generateCommand(
     requiresConfirmation:
       finalRisk === 'medium' ||
       finalRisk === 'critical',
+    
+    platformContext,
   };
+  
+  // Guardar en el historial
+  addHistoryEntry({
+    intent: finalResult.intent,
+    command: finalResult.command,
+    tool: finalResult.tool,
+    desc: finalResult.summary,
+    risk: finalResult.risk,
+  });
+
+  return finalResult;
 }

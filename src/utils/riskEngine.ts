@@ -14,30 +14,39 @@ export interface RiskAssessment {
   requiresConfirmation: boolean;
 }
 
-/**
- * Acciones consideradas especialmente peligrosas.
- */
 const destructivePatterns = [
   /\brm\s+(?:-[a-z]*r[a-z]*|--recursive)\b/i,
   /\brm\s+(?:-[a-z]*f[a-z]*|--force)\b/i,
 
+  // Windows PowerShell
+  /\bRemove-Item\s+-Recurse\s+-Force\b/i,
+  /\bRemove-Item\s+-Force\b/i,
+  /\bStop-Process\s+-Force\b/i,
+  /\bFormat-Volume\b/i,
+  /\bClear-Disk\b/i,
+  /\bRemove-Partition\b/i,
+
+  // Windows CMD
+  /\bdel\s+\/s\s+\/q\b/i,
+  /\brmdir\s+\/s\s+\/q\b/i,
+  /\brd\s+\/s\s+\/q\b/i,
+  /\btaskkill\s+\/F\b/i,
+
   /\bformat\b/i,
   /\bmkfs\b/i,
-
   /\bdd\s+if=/i,
-
   /\bgit\s+reset\s+--hard\b/i,
-
   /\bgit\s+clean\s+-[a-z]*f/i,
-
   /\bgit\s+branch\s+-D\b/i,
 
+  // Docker ampliado
   /\bdocker\s+system\s+prune\b/i,
-
   /\bdocker\s+volume\s+prune\b/i,
-
+  /\bdocker\s+container\s+prune\b/i,
+  /\bdocker\s+image\s+prune\b/i,
+  /\bdocker\s+network\s+prune\b/i,
   /\bdocker\s+volume\s+rm\b/i,
-
+  /\bdocker\s+rm\s+-f\b/i,
   /\bdocker\s+rm\b/i,
 ];
 
@@ -51,17 +60,12 @@ const mediumPatterns = [
   /\bdocker\s+kill\b/i,
 
   /\bgit\s+rebase\b/i,
-
   /\bgit\s+branch\s+-d\b/i,
-
   /\bgit\s+push\b/i,
-
   /\bgit\s+push\s+.*--force\b/i,
-
   /\bgit\s+push\s+-f\b/i,
 
   /\bkill\b/i,
-
   /\btaskkill\b/i,
 ];
 
