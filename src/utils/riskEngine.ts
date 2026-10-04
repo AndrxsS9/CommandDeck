@@ -33,14 +33,15 @@ const destructivePatterns = [
   /\btaskkill\b.*\s+\/F\b/i,
 
   // Filesystem general
-  /\bformat\b/i,
+  /\bformat\s+[a-z]:/i,
   /\bmkfs\b/i,
   /\bdd\s+if=/i,
-  
+
   // Git
   /\bgit\s+reset\s+--hard\b/i,
   /\bgit\s+clean\s+-[a-z]*f/i,
   /\bgit\s+branch\s+-D\b/i,
+  /\bgit\s+push\b.*\s+(?:-f|--force)(?:\s|$)/i,
 
   // Docker ampliado
   /\bdocker\s+system\s+prune\b/i,
@@ -64,7 +65,6 @@ const mediumPatterns = [
   /\bgit\s+rebase\b/i,
   /\bgit\s+branch\s+-d\b/i,
   /\bgit\s+push\b/i,
-  /\bgit\s+push\b.*\s+(?:-f|--force)\b/i,
 
   /\bkill\b/i,
   /\btaskkill\b/i,
