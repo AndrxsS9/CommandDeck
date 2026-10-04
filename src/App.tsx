@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState, useEffect, useRef } from 'react';
+import { FormEvent, useState, useEffect, useRef } from 'react';
 import { writeText } from '@tauri-apps/plugin-clipboard-manager';
 import { listen } from '@tauri-apps/api/event';
 import { generateCommand } from './services/commandService';
@@ -8,16 +8,16 @@ import './styles.css';
 import { AppHeader } from './components/AppHeader';
 import { Sidebar } from './components/Sidebar';
 import { ToolSelector } from './components/ToolSelector';
-import { CommandInput } from './components/CommandInput';
+import { CommandInput, type CommandInputHandle } from './components/CommandInput';
 import { CommandResultCard } from './components/CommandResultCard';
 import { RecentCommands } from './components/RecentCommands';
 import { LoadingState } from './components/LoadingState';
 import { ErrorState } from './components/ErrorState';
 
 const suggestions = [
-  'Ver las ramas locales de Git',
-  'Detener todos los contenedores Docker',
-  'Listar pods en Kubernetes',
+  'Mostrar el estado del repositorio Git',
+  'Listar contenedores Docker activos',
+  'Crear una carpeta llamada logs',
 ];
 
 function App() {
@@ -32,19 +32,16 @@ function App() {
   const [status, setStatus] = useState('');
   const [copied, setCopied] = useState(false);
 
-  // Efecto para cambiar el tema en el DOM
+  const commandInputRef = useRef<CommandInputHandle>(null);
+
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
-  // Listener para enfocar el input desde Tauri
+  // Escuchar evento de foco desde el HotKey de Tauri
   useEffect(() => {
     const unlisten = listen('focus-input', () => {
-      const input = document.querySelector('.command-input__field') as HTMLInputElement;
-      if (input) {
-        input.focus();
-        input.select();
-      }
+      commandInputRef.current?.focus();
     });
     
     return () => {
@@ -52,7 +49,6 @@ function App() {
     };
   }, []);
 
-  // Limpiar el estado copiado después de unos segundos
   useEffect(() => {
     if (copied) {
       const timer = setTimeout(() => setCopied(false), 2000);
@@ -78,7 +74,7 @@ function App() {
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error('ERROR GEMINI:', message);
+      console.error('Error al generar comando:', message);
       setErrorMsg(message);
     } finally {
       setLoading(false);
@@ -121,6 +117,7 @@ function App() {
             </div>
 
             <CommandInput
+              ref={commandInputRef}
               intent={intent}
               onIntentChange={setIntent}
               onSubmit={handleSubmit}

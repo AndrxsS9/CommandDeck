@@ -21,10 +21,7 @@ export interface PlatformContext {
 }
 
 /**
- * Respuesta propuesta por el generador.
- *
- * Hoy la genera nuestro simulador.
- * Más adelante la generará el LLM.
+ * Propuesta generada por el proveedor LLM (Gemini) vía Tauri/Rust.
  */
 export interface CommandSuggestion {
   intent: string;
@@ -34,10 +31,10 @@ export interface CommandSuggestion {
   explanation: string[];
 
   /**
-   * Riesgo sugerido por el generador.
+   * Riesgo sugerido por el LLM.
    *
-   * Importante:
-   * CommandDeck NO confiará únicamente en este valor.
+   * CommandDeck NO confía únicamente en este valor;
+   * el Risk Engine realiza una evaluación independiente.
    */
   suggestedRisk: RiskLevel;
 }
@@ -50,37 +47,23 @@ export interface CommandSuggestion {
  */
 export interface CommandResult {
   id: string;
-
   intent: string;
-
   command: string;
-
   tool: CommandTool;
-
   summary: string;
-
   explanation: string[];
 
-  /**
-   * Riesgo sugerido por IA/simulador.
-   */
+  /** Riesgo sugerido por IA. */
   aiRisk: RiskLevel;
 
-  /**
-   * Riesgo calculado localmente.
-   */
+  /** Riesgo calculado localmente por el Risk Engine. */
   localRisk: RiskLevel;
 
-  /**
-   * Riesgo definitivo mostrado al usuario.
-   */
+  /** Riesgo definitivo mostrado al usuario. */
   risk: RiskLevel;
 
   riskReasons: string[];
-
   reversible: boolean;
-
   destructive: boolean;
-
   requiresConfirmation: boolean;
 }

@@ -41,14 +41,17 @@ struct PlatformContext {
 
 const GEMINI_MODEL: &str = "gemini-3.5-flash-lite";
 
+/// Detección heurística de plataforma.
+///
+/// La shell se infiere a partir de variables de entorno.
+/// No es una detección exacta del shell activo del usuario,
+/// sino una aproximación razonable para orientar la generación.
 #[tauri::command]
 fn get_platform_context() -> PlatformContext {
     let os = std::env::consts::OS;
     
-    // Simplistic shell detection
     let shell = if os == "windows" {
-        // En Windows el shell por defecto más común actualmente suele ser powershell
-        // o podemos verificar variables de entorno (COMSPEC o PSModulePath)
+        // Heurística: si PSModulePath existe, PowerShell está disponible
         if std::env::var("PSModulePath").is_ok() {
             "powershell".to_string()
         } else {
@@ -74,26 +77,16 @@ async fn generate_command_with_ai(
     preferred_tool: String,
 ) -> Result<CommandSuggestion, String> {
 
-    println!("LLAMANDO A GEMINI — intent recibido: {}", intent);
-    println!("Modelo utilizado: {}", GEMINI_MODEL);
+    println!("[CommandDeck] Intent recibido: {}", intent);
 
-    /*
-     * Recuperamos la clave de Gemini
-     * desde Windows.
-     */
     let api_key =
         std::env::var("GEMINI_API_KEY")
             .map_err(|_| {
                 "No se encontró la variable GEMINI_API_KEY. Asegúrate de configurarla como variable de entorno del sistema.".to_string()
             })?;
 
-    println!("GEMINI_API_KEY encontrada (longitud: {})", api_key.len());
-
     let client = reqwest::Client::new();
 
-    /*
-     * System Prompt de CommandDeck.
-     */
     let system_prompt = r#"
 Eres el motor de generación de comandos de CommandDeck.
 
@@ -136,10 +129,6 @@ La estructura debe ser exactamente:
 }
 "#;
 
-    /*
-     * Combinamos instrucciones del sistema
-     * con la petición del usuario.
-     */
     let prompt = format!(
         "{}\n\nContexto:\nSistema Operativo: {}\nShell: {}\nHerramienta preferida: {}\n\nPetición del usuario:\n{}",
         system_prompt,
@@ -149,9 +138,6 @@ La estructura debe ser exactamente:
         intent
     );
 
-    /*
-     * Pedimos JSON como respuesta.
-     */
     let body = json!({
         "contents": [
             {
@@ -170,12 +156,6 @@ La estructura debe ser exactamente:
         }
     });
 
-    /*
-     * Gemini generateContent.
-     *
-     * Usamos un modelo Flash-Lite para mantener
-     * baja latencia y consumo reducido.
-     */
     let url = format!(
         "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent?key={}",
         GEMINI_MODEL,
@@ -187,13 +167,9 @@ La estructura debe ser exactamente:
     let mut wait_secs = 1;
 
     let json_response: serde_json::Value = loop {
-        println!("Intento {} de {}", attempt, max_retries);
-        println!("ENVIANDO REQUEST A GEMINI...");
-
         match client.post(&url).json(&body).send().await {
             Ok(response) => {
                 let status = response.status();
-                println!("Gemini respondió HTTP {}", status);
 
                 if status.is_success() {
                     let json = response.json().await.map_err(|e| {
@@ -206,51 +182,42 @@ La estructura debe ser exactamente:
 
                     if is_transient {
                         if attempt < max_retries {
-                            println!("Reintentando en {} segundos...", wait_secs);
+                            eprintln!("[CommandDeck] Gemini HTTP {}. Reintentando en {}s...", status, wait_secs);
                             tokio::time::sleep(std::time::Duration::from_secs(wait_secs)).await;
                             attempt += 1;
                             wait_secs *= 2;
                             continue;
                         } else {
-                            println!("ERROR GEMINI DEFINITIVO: Máximo de reintentos alcanzado.");
+                            eprintln!("[CommandDeck] Máximo de reintentos alcanzado.");
                             break Err("Gemini no está disponible temporalmente. Intenta nuevamente en unos segundos.".to_string());
                         }
                     } else {
-                        // Error no transitorio (400, 401, 403, 404, etc.)
                         let json: serde_json::Value = response.json().await.unwrap_or(serde_json::Value::Null);
                         let error_message = json["error"]["message"]
                             .as_str()
                             .unwrap_or("Sin detalle de error");
                         
                         let err_str = format!("Error de Gemini (HTTP {}): {}", status, error_message);
-                        println!("ERROR GEMINI DEFINITIVO: {}", err_str);
+                        eprintln!("[CommandDeck] {}", err_str);
                         break Err(err_str);
                     }
                 }
             }
             Err(e) => {
                 if attempt < max_retries {
-                    println!("Error de conexión: {}. Reintentando en {} segundos...", e, wait_secs);
+                    eprintln!("[CommandDeck] Error de conexión: {}. Reintentando en {}s...", e, wait_secs);
                     tokio::time::sleep(std::time::Duration::from_secs(wait_secs)).await;
                     attempt += 1;
                     wait_secs *= 2;
                     continue;
                 } else {
-                    println!("ERROR GEMINI DEFINITIVO: Máximo de reintentos alcanzado. ({})", e);
+                    eprintln!("[CommandDeck] Máximo de reintentos alcanzado. ({})", e);
                     break Err("Gemini no está disponible temporalmente. Intenta nuevamente en unos segundos.".to_string());
                 }
             }
         }
     }?;
 
-    /*
-     * Gemini devuelve normalmente:
-     *
-     * candidates[0]
-     *   .content
-     *   .parts[0]
-     *   .text
-     */
     let output_text =
         json_response["candidates"]
             .get(0)
@@ -262,18 +229,9 @@ La estructura debe ser exactamente:
                 part["text"].as_str()
             })
             .ok_or_else(|| {
-                format!(
-                    "Gemini no devolvió contenido válido. Respuesta completa: {}",
-                    json_response
-                )
+                "Gemini no devolvió contenido válido.".to_string()
             })?;
 
-    println!("RESPUESTA DE GEMINI RECIBIDA: {}", output_text);
-
-    /*
-     * Convertimos el JSON generado por Gemini
-     * a nuestra estructura Rust.
-     */
     let result: CommandSuggestion =
         serde_json::from_str(output_text)
             .map_err(|e| {
@@ -284,7 +242,7 @@ La estructura debe ser exactamente:
                 )
             })?;
 
-    println!("COMANDO GENERADO: {}", result.command);
+    println!("[CommandDeck] Comando generado: {}", result.command);
 
     Ok(result)
 }
@@ -301,21 +259,14 @@ pub fn run() {
         )
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
-                .with_handler(|app, shortcut, event| {
+                .with_handler(|app, _shortcut, event| {
                     if event.state() == ShortcutState::Pressed {
                         if let Some(window) = app.get_webview_window("main") {
-                            // Mostrar ventana
                             let _ = window.show();
-                            // Desminimizar si está minimizada
-                            if let Ok(is_minimized) = window.is_minimized() {
-                                if is_minimized {
-                                    let _ = window.unminimize();
-                                }
+                            if let Ok(true) = window.is_minimized() {
+                                let _ = window.unminimize();
                             }
-                            // Traer al frente y dar foco
                             let _ = window.set_focus();
-                            
-                            // Emitimos evento para enfocar el input en react
                             let _ = window.emit("focus-input", ());
                         }
                     }
@@ -323,11 +274,36 @@ pub fn run() {
                 .build()
         )
         .setup(|app| {
-            // Register hotkey Alt+Space
             #[cfg(desktop)]
             {
-                let shortcut = Shortcut::new(Some(tauri_plugin_global_shortcut::Modifiers::ALT), tauri_plugin_global_shortcut::Code::Space);
-                let _ = app.global_shortcut().register(shortcut);
+                let gs = app.global_shortcut();
+
+                // Intentar registrar Alt+Space primero
+                let primary = Shortcut::new(
+                    Some(tauri_plugin_global_shortcut::Modifiers::ALT),
+                    tauri_plugin_global_shortcut::Code::Space,
+                );
+
+                match gs.register(primary) {
+                    Ok(_) => println!("[CommandDeck] HotKey registrado: Alt+Space"),
+                    Err(e) => {
+                        eprintln!("[CommandDeck] Alt+Space no disponible ({}). Intentando Ctrl+Alt+Space...", e);
+
+                        // Fallback: Ctrl+Alt+Space
+                        let fallback = Shortcut::new(
+                            Some(
+                                tauri_plugin_global_shortcut::Modifiers::CONTROL
+                                    | tauri_plugin_global_shortcut::Modifiers::ALT,
+                            ),
+                            tauri_plugin_global_shortcut::Code::Space,
+                        );
+
+                        match gs.register(fallback) {
+                            Ok(_) => println!("[CommandDeck] HotKey registrado (fallback): Ctrl+Alt+Space"),
+                            Err(e2) => eprintln!("[CommandDeck] No se pudo registrar ningún HotKey: {}", e2),
+                        }
+                    }
+                }
             }
             Ok(())
         })

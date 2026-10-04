@@ -13,7 +13,7 @@ import { addHistoryEntry } from './historyService';
 /**
  * Jerarquía de riesgo.
  *
- * Nos permite comparar el riesgo sugerido por la IA
+ * Permite comparar el riesgo sugerido por la IA
  * con el calculado localmente.
  */
 const riskPriority: Record<RiskLevel, number> = {
@@ -30,118 +30,61 @@ function getHighestRisk(
   aiRisk: RiskLevel,
   localRisk: RiskLevel
 ): RiskLevel {
-
-  if (
-    riskPriority[localRisk] >=
-    riskPriority[aiRisk]
-  ) {
-    return localRisk;
-  }
-
-  return aiRisk;
+  return riskPriority[localRisk] >= riskPriority[aiRisk]
+    ? localRisk
+    : aiRisk;
 }
 
 /**
- * Este será el servicio central de CommandDeck.
+ * Orquestador central de CommandDeck.
  *
- * La interfaz NO debería llamar directamente
- * ni al simulador ni posteriormente al LLM.
+ * La interfaz llama únicamente a esta función.
  *
- * App
- *  ↓
- * commandService
- *  ↓
- * generador
- *  ↓
- * Safety Engine
+ * Flujo:
+ *   App → commandService → Gemini (vía Tauri) → Risk Engine → UI
  */
 export async function generateCommand(
   intent: string,
   preferredTool: CommandTool | 'all'
 ): Promise<CommandResult & { platformContext: PlatformContext }> {
 
-  /*
-   * Obtenemos el contexto de la plataforma real
-   */
   const platformContext = await getPlatformContext();
 
-  /*
-   * PASO 1
-   *
-   * Pedimos una propuesta.
-   *
-   * Hoy:
-   * Gemini
-   */
+  // Paso 1: Generación con Gemini
   const suggestion =
     await generateLLMSuggestion(intent, platformContext, preferredTool);
 
-  /*
-   * PASO 2
-   *
-   * CommandDeck analiza independientemente
-   * el comando generado.
-   */
+  // Paso 2: Evaluación independiente de riesgo
   const localAssessment =
     assessRisk(suggestion.command);
 
-  /*
-   * PASO 3
-   *
-   * Comparamos:
-   *
-   * riesgo de IA
-   * VS
-   * riesgo local.
-   *
-   * Siempre conservamos el más alto.
-   */
+  // Paso 3: Tomar el riesgo más alto entre IA y local
   const finalRisk = getHighestRisk(
     suggestion.suggestedRisk,
     localAssessment.level
   );
 
-  /*
-   * PASO 4
-   *
-   * Construimos el objeto definitivo
-   * que recibirá la interfaz.
-   */
+  // Paso 4: Resultado final
   const finalResult = {
     id: crypto.randomUUID(),
-
     intent: suggestion.intent,
-
     command: suggestion.command,
-
     tool: suggestion.tool,
-
     summary: suggestion.summary,
-
     explanation: suggestion.explanation,
-
     aiRisk: suggestion.suggestedRisk,
-
     localRisk: localAssessment.level,
-
     risk: finalRisk,
-
     riskReasons: localAssessment.reasons,
-
-    reversible:
-      localAssessment.reversible,
-
-    destructive:
-      localAssessment.destructive,
-
+    reversible: localAssessment.reversible,
+    destructive: localAssessment.destructive,
     requiresConfirmation:
       finalRisk === 'medium' ||
       finalRisk === 'critical',
-    
     platformContext,
   };
   
-  // Guardar en el historial
+  // Guardar en historial (aislado: no debe afectar al resultado)
   addHistoryEntry({
     intent: finalResult.intent,
     command: finalResult.command,

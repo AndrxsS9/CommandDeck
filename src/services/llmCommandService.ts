@@ -12,7 +12,7 @@ import type {
  * Cuando la app se abre en un navegador normal
  * (por ejemplo con "npm run dev"),
  * window.__TAURI_INTERNALS__ no existe
- * y invoke lanza un error críptico.
+ * y invoke lanza un error.
  */
 function isTauriRuntime(): boolean {
   return typeof window !== 'undefined'
@@ -26,7 +26,7 @@ export async function getPlatformContext(): Promise<PlatformContext> {
   try {
     return await invoke<PlatformContext>('get_platform_context');
   } catch (err) {
-    console.warn("Failed to get platform context", err);
+    console.warn('[CommandDeck] No se pudo obtener el contexto de plataforma:', err);
     return { os: 'unknown', shell: 'unknown' };
   }
 }
@@ -37,18 +37,13 @@ export async function generateLLMSuggestion(
   preferredTool: CommandTool | 'all'
 ): Promise<CommandSuggestion> {
 
-  const insideTauri = isTauriRuntime();
-  console.log('¿ESTOY DENTRO DE TAURI?', insideTauri);
-
-  if (!insideTauri) {
+  if (!isTauriRuntime()) {
     throw new Error(
       'La app no está corriendo dentro de Tauri. '
       + 'Usa "npm run tauri dev" en vez de "npm run dev". '
       + 'invoke() solo funciona dentro de la ventana nativa de Tauri.'
     );
   }
-
-  console.log('LLAMANDO A GEMINI (invoke generate_command_with_ai) con intent:', intent);
 
   try {
     const result = await invoke<CommandSuggestion>(
@@ -61,12 +56,10 @@ export async function generateLLMSuggestion(
       }
     );
 
-    console.log('RESPUESTA DE GEMINI RECIBIDA:', result);
-
     return result;
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error('ERROR INVOKE:', message);
+    console.error('[CommandDeck] Error al invocar Gemini:', message);
     throw new Error(`Error al invocar Gemini desde Rust: ${message}`);
   }
 }

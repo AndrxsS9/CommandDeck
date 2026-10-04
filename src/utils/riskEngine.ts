@@ -2,39 +2,42 @@ import type { RiskLevel } from '../types/command';
 
 export interface RiskAssessment {
   level: RiskLevel;
-
   score: number;
-
   reasons: string[];
-
   reversible: boolean;
-
   destructive: boolean;
-
   requiresConfirmation: boolean;
 }
 
 const destructivePatterns = [
+  // Linux
   /\brm\s+(?:-[a-z]*r[a-z]*|--recursive)\b/i,
   /\brm\s+(?:-[a-z]*f[a-z]*|--force)\b/i,
 
   // Windows PowerShell
-  /\bRemove-Item\s+-Recurse\s+-Force\b/i,
-  /\bRemove-Item\s+-Force\b/i,
-  /\bStop-Process\s+-Force\b/i,
+  /\bRemove-Item\b.*-Recurse\b.*-Force\b/i,
+  /\bRemove-Item\b.*-Force\b.*-Recurse\b/i,
+  /\bRemove-Item\b.*-Force\b/i,
+  /\bStop-Process\b.*-Force\b/i,
   /\bFormat-Volume\b/i,
   /\bClear-Disk\b/i,
   /\bRemove-Partition\b/i,
 
   // Windows CMD
-  /\bdel\s+\/s\s+\/q\b/i,
-  /\brmdir\s+\/s\s+\/q\b/i,
-  /\brd\s+\/s\s+\/q\b/i,
-  /\btaskkill\s+\/F\b/i,
+  /\bdel\b.*\s+\/s\b.*\s+\/q\b/i,
+  /\bdel\b.*\s+\/q\b.*\s+\/s\b/i,
+  /\brmdir\b.*\s+\/s\b.*\s+\/q\b/i,
+  /\brmdir\b.*\s+\/q\b.*\s+\/s\b/i,
+  /\brd\b.*\s+\/s\b.*\s+\/q\b/i,
+  /\brd\b.*\s+\/q\b.*\s+\/s\b/i,
+  /\btaskkill\b.*\s+\/F\b/i,
 
+  // Filesystem general
   /\bformat\b/i,
   /\bmkfs\b/i,
   /\bdd\s+if=/i,
+  
+  // Git
   /\bgit\s+reset\s+--hard\b/i,
   /\bgit\s+clean\s+-[a-z]*f/i,
   /\bgit\s+branch\s+-D\b/i,
@@ -45,9 +48,8 @@ const destructivePatterns = [
   /\bdocker\s+container\s+prune\b/i,
   /\bdocker\s+image\s+prune\b/i,
   /\bdocker\s+network\s+prune\b/i,
-  /\bdocker\s+volume\s+rm\b/i,
-  /\bdocker\s+rm\s+-f\b/i,
-  /\bdocker\s+rm\b/i,
+  /\bdocker\s+(?:container\s+)?rm\b.*\s+(?:-f|--force)\b/i,
+  /\bdocker\s+(?:volume\s+)?rm\b/i,
 ];
 
 /**
@@ -62,8 +64,7 @@ const mediumPatterns = [
   /\bgit\s+rebase\b/i,
   /\bgit\s+branch\s+-d\b/i,
   /\bgit\s+push\b/i,
-  /\bgit\s+push\s+.*--force\b/i,
-  /\bgit\s+push\s+-f\b/i,
+  /\bgit\s+push\b.*\s+(?:-f|--force)\b/i,
 
   /\bkill\b/i,
   /\btaskkill\b/i,
@@ -96,15 +97,10 @@ const writePatterns = [
  */
 const bulkPatterns = [
   /\$\(/i,
-
   /\bxargs\b/i,
-
   /\b--all\b/i,
-
   /\s-a\b/i,
-
   /\s--force\b/i,
-
   /\s-f\b/i,
 ];
 
@@ -113,147 +109,69 @@ const bulkPatterns = [
  */
 const elevatedPrivilegePatterns = [
   /\bsudo\b/i,
-
   /\brunas\b/i,
-
   /\bStart-Process\b.*-Verb\s+RunAs/i,
 ];
 
 export function assessRisk(command: string): RiskAssessment {
   let score = 0;
-
   const reasons: string[] = [];
-
   let destructive = false;
-
   let reversible = true;
 
-  const hasDestructiveAction = destructivePatterns.some((pattern) =>
-    pattern.test(command)
-  );
+  const hasDestructiveAction = destructivePatterns.some((pattern) => pattern.test(command));
+  const hasMediumAction = mediumPatterns.some((pattern) => pattern.test(command));
+  const hasWriteAction = writePatterns.some((pattern) => pattern.test(command));
+  const hasBulkAction = bulkPatterns.some((pattern) => pattern.test(command));
+  const hasElevatedPrivileges = elevatedPrivilegePatterns.some((pattern) => pattern.test(command));
 
-  const hasMediumAction = mediumPatterns.some((pattern) =>
-    pattern.test(command)
-  );
-
-  const hasWriteAction = writePatterns.some((pattern) =>
-    pattern.test(command)
-  );
-
-  const hasBulkAction = bulkPatterns.some((pattern) =>
-    pattern.test(command)
-  );
-
-  const hasElevatedPrivileges = elevatedPrivilegePatterns.some((pattern) =>
-    pattern.test(command)
-  );
-
-  /*
-   * 1. Acción destructiva
-   */
   if (hasDestructiveAction) {
     score += 8;
-
     destructive = true;
-
     reversible = false;
-
-    reasons.push(
-      'El comando puede eliminar, sobrescribir o descartar información.'
-    );
+    reasons.push('El comando puede eliminar, sobrescribir o descartar información.');
   }
 
-  /*
-   * 2. Modificación significativa
-   */
   if (hasMediumAction) {
     score += 4;
-
-    reasons.push(
-      'El comando modifica el estado de procesos, servicios o repositorios.'
-    );
+    reasons.push('El comando modifica el estado de procesos, servicios o repositorios.');
   }
 
-  /*
-   * 3. Escritura normal
-   */
   if (hasWriteAction) {
     score += 2;
-
-    reasons.push(
-      'El comando realiza modificaciones locales.'
-    );
+    reasons.push('El comando realiza modificaciones locales.');
   }
 
-  /*
-   * 4. Operación masiva
-   */
   if (hasBulkAction) {
     score += 2;
-
-    reasons.push(
-      'La operación puede afectar múltiples elementos.'
-    );
+    reasons.push('La operación puede afectar múltiples elementos.');
   }
 
-  /*
-   * 5. Privilegios elevados
-   */
   if (hasElevatedPrivileges) {
     score += 4;
-
-    reasons.push(
-      'El comando solicita privilegios elevados del sistema.'
-    );
+    reasons.push('El comando solicita privilegios elevados del sistema.');
   }
 
-  /*
-   * Convertimos el puntaje a un nivel comprensible.
-   */
-let level: RiskLevel = 'read';
+  let level: RiskLevel = 'read';
 
-/*
- * Una acción destructiva siempre será crítica,
- * independientemente de la puntuación acumulada.
- */
-if (hasDestructiveAction) {
-  level = 'critical';
-}
+  if (hasDestructiveAction || score >= 8) {
+    level = 'critical';
+  } else if (score >= 4) {
+    level = 'medium';
+  } else if (score >= 1) {
+    level = 'low';
+  }
 
-else if (score >= 8) {
-  level = 'critical';
-}
-
-else if (score >= 4) {
-  level = 'medium';
-}
-
-else if (score >= 1) {
-  level = 'low';
-}
-
-  /*
-   * Si no encontramos ninguna modificación,
-   * consideramos el comando informativo.
-   */
   if (score === 0) {
-    reasons.push(
-      'El comando parece realizar únicamente una consulta o lectura.'
-    );
+    reasons.push('El comando parece realizar únicamente una consulta o lectura.');
   }
 
   return {
     level,
-
     score,
-
     reasons,
-
     reversible,
-
     destructive,
-
-    requiresConfirmation:
-      level === 'medium' || level === 'critical',
+    requiresConfirmation: level === 'medium' || level === 'critical',
   };
 }
