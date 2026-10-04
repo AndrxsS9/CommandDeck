@@ -1,19 +1,7 @@
+import { useState, useEffect } from 'react';
 import type { CommandTool } from '../types/command';
 import type { ReactNode } from 'react';
-
-interface RecentCommand {
-  id: string;
-  tool: CommandTool;
-  command: string;
-  desc: string;
-}
-
-const mockRecentCommands: RecentCommand[] = [
-  { id: '1', tool: 'git', command: 'git status', desc: 'Ver estado del árbol de trabajo' },
-  { id: '2', tool: 'docker', command: 'docker ps -a', desc: 'Listar todos los contenedores' },
-  { id: '3', tool: 'unknown', command: 'kubectl get pods -A', desc: 'Listar pods de todos los namespaces' },
-  { id: '4', tool: 'system', command: 'ls -la --color=auto', desc: 'Listado detallado con permisos' },
-];
+import { getHistory, type HistoryEntry } from '../services/historyService';
 
 const toolIcons: Record<string, ReactNode> = {
   git: (
@@ -55,10 +43,23 @@ const toolLabels: Record<string, string> = {
 };
 
 interface RecentCommandsProps {
-  onReuse: (command: string) => void;
+  onReuse: (intent: string) => void;
 }
 
 export function RecentCommands({ onReuse }: RecentCommandsProps) {
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+
+  useEffect(() => {
+    setHistory(getHistory());
+
+    const onUpdate = () => {
+      setHistory(getHistory());
+    };
+
+    window.addEventListener('history_updated', onUpdate);
+    return () => window.removeEventListener('history_updated', onUpdate);
+  }, []);
+
   return (
     <aside className="recent-panel">
       <div className="recent-panel__header">
@@ -69,21 +70,21 @@ export function RecentCommands({ onReuse }: RecentCommandsProps) {
           </svg>
           <span>Recientes</span>
         </div>
-        <span className="recent-panel__count">4 guardados</span>
+        <span className="recent-panel__count">{history.length} guardados</span>
       </div>
 
       <div className="recent-panel__list">
-        {mockRecentCommands.map((item) => (
+        {history.map((item) => (
           <div key={item.id} className="recent-item">
             <div className="recent-item__header">
               <span className="recent-item__tool">
-                {toolIcons[item.tool]}
-                {toolLabels[item.tool]}
+                {toolIcons[item.tool] || toolIcons['unknown']}
+                {toolLabels[item.tool] || toolLabels['unknown']}
               </span>
               <button
                 className="recent-item__reuse"
-                onClick={() => onReuse(item.command)}
-                aria-label={`Reutilizar ${item.command}`}
+                onClick={() => onReuse(item.intent)}
+                aria-label={`Reutilizar ${item.intent}`}
               >
                 Reutilizar
                 <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
