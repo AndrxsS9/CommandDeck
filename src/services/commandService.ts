@@ -67,7 +67,7 @@ export async function generateCommand(
   let finalReasons = [...localAssessment.reasons];
 
   if (riskPriority[suggestion.suggestedRisk] > riskPriority[localAssessment.level]) {
-    finalReasons.push(`La IA sugirió un nivel de riesgo superior (${suggestion.suggestedRisk}) al detectado por el análisis local.`);
+    finalReasons.unshift(`La IA sugirió un nivel de riesgo superior (${suggestion.suggestedRisk}) al detectado por el análisis local.`);
   }
 
   if (finalRisk === 'medium' || finalRisk === 'critical') {
