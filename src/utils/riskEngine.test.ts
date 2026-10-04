@@ -130,4 +130,31 @@ describe('Risk Engine', () => {
     const rd = assessRisk('rd carpeta');
     expect(rd.level).toBe('critical');
   });
+
+  // --- Kubernetes ---
+  it('detecta comandos de lectura en Kubernetes', () => {
+    expect(assessRisk('kubectl get pods').level).toBe('read');
+    expect(assessRisk('kubectl describe pod api').level).toBe('read');
+    expect(assessRisk('kubectl logs api').level).toBe('read');
+    expect(assessRisk('kubectl config current-context').level).toBe('read');
+  });
+
+  it('detecta comandos de riesgo medio en Kubernetes', () => {
+    const apply = assessRisk('kubectl apply -f deployment.yaml');
+    expect(apply.level).toBe('medium');
+    expect(apply.requiresConfirmation).toBe(true);
+
+    expect(assessRisk('kubectl scale deployment api --replicas=0').level).toBe('medium');
+    expect(assessRisk('kubectl rollout restart deployment api').level).toBe('medium');
+  });
+
+  it('detecta comandos criticos destructivos en Kubernetes', () => {
+    const delPod = assessRisk('kubectl delete pod api');
+    expect(delPod.level).toBe('critical');
+    expect(delPod.destructive).toBe(true);
+    expect(delPod.requiresConfirmation).toBe(true);
+
+    expect(assessRisk('kubectl delete namespace production').level).toBe('critical');
+    expect(assessRisk('kubectl replace --force -f deployment.yaml').level).toBe('critical');
+  });
 });
