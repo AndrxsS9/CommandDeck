@@ -9,21 +9,39 @@ interface CommandResultCardProps {
   copied: boolean;
 }
 
-export function CommandResultCard({ result, onCopy, onNewQuery, copied }: CommandResultCardProps) {
-  const getPlatformLabel = () => {
-    if (!result.platformContext) return 'Bash / Zsh';
-    const { os, shell } = result.platformContext;
-    const osName = os === 'windows' ? 'Windows' : os === 'macos' ? 'macOS' : 'Linux';
-    const shellName = shell === 'powershell' ? 'PowerShell' : shell === 'cmd' ? 'CMD' : shell === 'zsh' ? 'Zsh' : 'Bash';
-    return `${osName} / ${shellName}`;
-  };
+const OS_LABELS: Record<string, string> = {
+  windows: 'Windows',
+  macos: 'macOS',
+  linux: 'Linux',
+};
 
+const SHELL_LABELS: Record<string, string> = {
+  powershell: 'PowerShell',
+  cmd: 'CMD',
+  bash: 'Bash',
+  zsh: 'Zsh',
+};
+
+function getPlatformLabel(ctx?: PlatformContext): string {
+  if (!ctx) return 'Plataforma no determinada';
+
+  const { os, shell } = ctx;
+  const osLabel = OS_LABELS[os];
+  const shellLabel = SHELL_LABELS[shell];
+
+  if (!osLabel && !shellLabel) return 'Plataforma no determinada';
+  if (!osLabel) return `Shell inferida: ${shellLabel}`;
+  if (!shellLabel) return `${osLabel} / Shell no determinada`;
+  return `${osLabel} / ${shellLabel}`;
+}
+
+export function CommandResultCard({ result, onCopy, onNewQuery, copied }: CommandResultCardProps) {
   return (
     <section className="command-result">
       {/* Header */}
       <div className="command-result__header">
         <span className="command-result__label">Resultado Generado</span>
-        <span className="command-result__shell-tag">{getPlatformLabel()}</span>
+        <span className="command-result__shell-tag">{getPlatformLabel(result.platformContext)}</span>
       </div>
 
       {/* Terminal box */}

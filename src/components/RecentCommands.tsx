@@ -21,9 +21,9 @@ const toolIcons: Record<string, ReactNode> = {
   ),
   unknown: (
     <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-      <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2" />
-      <line x1="12" y1="22" x2="12" y2="15.5" />
-      <polyline points="22 8.5 12 15.5 2 8.5" />
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
     </svg>
   ),
   system: (
@@ -38,7 +38,7 @@ const toolIcons: Record<string, ReactNode> = {
 const toolLabels: Record<string, string> = {
   git: 'Git',
   docker: 'Docker',
-  unknown: 'Kubernetes',
+  unknown: 'Desconocido', // Corregido: ya no dice "Kubernetes"
   system: 'Linux',
 };
 
