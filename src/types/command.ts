@@ -3,6 +3,7 @@ export type RiskLevel = 'read' | 'low' | 'medium' | 'critical';
 export type CommandTool =
   | 'git'
   | 'docker'
+  | 'kubernetes'
   | 'system'
   | 'unknown';
 
