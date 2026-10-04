@@ -98,6 +98,7 @@ CommandDeck está orientado inicialmente a:
 
 - Git
 - Docker
+- Kubernetes
 - comandos básicos del sistema
 
 Reglas:

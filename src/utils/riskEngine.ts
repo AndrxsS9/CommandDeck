@@ -37,6 +37,10 @@ const destructivePatterns = [
   /\brd\s+(?!\/)\S+/i,
   /\btaskkill\b.*\s+\/F\b/i,
 
+  // Kubernetes
+  /\bkubectl\s+delete\b/i,
+  /\bkubectl\s+replace\b.*\s+--force\b/i,
+
   // Filesystem general
   /\bformat\s+[a-z]:/i,
   /\bmkfs\b/i,
@@ -73,6 +77,9 @@ const mediumPatterns = [
 
   /\bkill\b/i,
   /\btaskkill\b/i,
+
+  // Kubernetes
+  /\bkubectl\s+(?:apply|create|scale|rollout|set|patch)\b/i,
 ];
 
 /**
