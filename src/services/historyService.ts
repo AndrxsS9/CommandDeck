@@ -27,7 +27,7 @@ export function getHistory(): HistoryEntry[] {
           item.tool && 
           item.risk && 
           item.timestamp
-        );
+        ).slice(0, MAX_HISTORY);
       }
     }
   } catch (e) {

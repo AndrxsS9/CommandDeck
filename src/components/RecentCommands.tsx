@@ -130,7 +130,7 @@ export function RecentCommands({ onReuse }: RecentCommandsProps) {
           Flujo recomendado
         </div>
         <p className="tip-card__text">
-          Describe → Genera → Revisa parámetros y nivel de riesgo antes de copiar o simular.
+          Describe → Genera → Revisa parámetros y nivel de riesgo antes de copiar el comando.
         </p>
       </div>
     </aside>

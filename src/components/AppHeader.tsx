@@ -24,7 +24,7 @@ export function AppHeader({ theme, onToggleTheme }: AppHeaderProps) {
       <div className="app-header__search">
         <div className="app-header__search-wrapper" style={{ background: 'transparent', border: 'none' }}>
           <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>
-            Alt + Space para abrir CommandDeck
+            Alt + Space para abrir · Ctrl + Alt + Space si no está disponible
           </span>
         </div>
       </div>
