@@ -58,8 +58,8 @@ const navItems: SidebarItem[] = [
   { id: 'git', label: 'Comandos Git', tool: 'git', icon: 'git' },
   { id: 'docker', label: 'Contenedores Docker', tool: 'docker', icon: 'docker' },
   { id: 'kubernetes', label: 'Kubernetes', icon: 'kubernetes', disabled: true },
-  { id: 'system', label: 'Comandos Linux', tool: 'system', icon: 'system' },
-  { id: 'history', label: 'Historial', icon: 'history' },
+  { id: 'system', label: 'Comandos del sistema', tool: 'system', icon: 'system' },
+  { id: 'history', label: 'Historial', icon: 'history', disabled: true },
 ];
 
 interface SidebarProps {
@@ -97,7 +97,7 @@ export function Sidebar({ activeItem, onSelectItem }: SidebarProps) {
       <div className="sidebar__footer">
         <div className="sidebar__footer-status">
           <span className="status-dot" />
-          <span className="sidebar__footer-label">Motor IA Activo</span>
+          <span className="sidebar__footer-label">Asistente disponible</span>
         </div>
       </div>
     </aside>

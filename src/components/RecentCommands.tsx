@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { CommandTool } from '../types/command';
 import type { ReactNode } from 'react';
-import { getHistory, type HistoryEntry } from '../services/historyService';
+import { getHistory, clearHistory, type HistoryEntry } from '../services/historyService';
 
 const toolIcons: Record<string, ReactNode> = {
   git: (
@@ -38,8 +38,8 @@ const toolIcons: Record<string, ReactNode> = {
 const toolLabels: Record<string, string> = {
   git: 'Git',
   docker: 'Docker',
-  unknown: 'Desconocido', // Corregido: ya no dice "Kubernetes"
-  system: 'Linux',
+  unknown: 'Desconocido', 
+  system: 'Sistema',
 };
 
 interface RecentCommandsProps {
@@ -70,7 +70,28 @@ export function RecentCommands({ onReuse }: RecentCommandsProps) {
           </svg>
           <span>Recientes</span>
         </div>
-        <span className="recent-panel__count">{history.length} guardados</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span className="recent-panel__count">{history.length} guardados</span>
+          {history.length > 0 && (
+            <button
+              onClick={() => {
+                if (window.confirm('¿Estás seguro de que quieres limpiar el historial?')) {
+                  clearHistory();
+                }
+              }}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--color-text-tertiary)',
+                cursor: 'pointer',
+                fontSize: '0.8rem',
+                textDecoration: 'underline'
+              }}
+            >
+              Limpiar
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="recent-panel__list">
