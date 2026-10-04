@@ -6,6 +6,20 @@ export type CommandTool =
   | 'system'
   | 'unknown';
 
+export type OperatingSystem = 'windows' | 'linux' | 'macos' | 'unknown';
+
+export type ShellType =
+  | 'powershell'
+  | 'cmd'
+  | 'bash'
+  | 'zsh'
+  | 'unknown';
+
+export interface PlatformContext {
+  os: OperatingSystem;
+  shell: ShellType;
+}
+
 /**
  * Respuesta propuesta por el generador.
  *
