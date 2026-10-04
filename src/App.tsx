@@ -68,9 +68,6 @@ function App() {
     try {
       const commandResult = await generateCommand(intent, activeTool);
       setResult(commandResult);
-      if (commandResult.tool && commandResult.tool !== 'unknown') {
-        setActiveTool(commandResult.tool);
-      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       console.error('Error al generar comando:', message);
@@ -98,6 +95,14 @@ function App() {
     }
   }
 
+  function handleSidebarSelection(id: string) {
+    setActiveTab(id);
+    if (id === 'home') setActiveTool('all');
+    else if (id === 'git') setActiveTool('git');
+    else if (id === 'docker') setActiveTool('docker');
+    else if (id === 'system') setActiveTool('system');
+  }
+
   return (
     <div className="app-layout">
       <AppHeader 
@@ -106,7 +111,7 @@ function App() {
       />
 
       <div className="app-body">
-        <Sidebar activeItem={activeTab} onSelectItem={setActiveTab} />
+        <Sidebar activeItem={activeTab} onSelectItem={handleSidebarSelection} />
 
         <main className="main-content">
           <div className="main-content__inner">
@@ -162,7 +167,10 @@ function App() {
           </div>
         </main>
 
-        <RecentCommands onReuse={(cmd) => setIntent(cmd)} />
+        <RecentCommands onReuse={(cmd) => {
+          setIntent(cmd);
+          setActiveTool('all');
+        }} />
       </div>
     </div>
   );
