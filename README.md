@@ -1,59 +1,89 @@
-# CommandDeck - Asistente IA de Terminal
+# CommandDeck — Asistente IA de Terminal
 
-Aplicación de escritorio construida con Tauri, React y Rust, diseñada para convertir intenciones en lenguaje natural a comandos seguros de terminal usando Gemini API.
+Aplicación de escritorio construida con Tauri 2, React 19 y Rust, diseñada para convertir intenciones en lenguaje natural a propuestas de comandos de terminal con evaluación local de riesgo, usando Gemini API.
 
-## Arquitectura Actual
+## Arquitectura
 
 ```text
 Usuario
   ↓
-React (UI)
+React 19 (UI)
   ↓
 CommandService (Orquestador)
   ↓
-PlatformContext (Detección de OS/Shell)
+PlatformContext (Detección heurística de OS/Shell)
   ↓
-LLM Service (Cliente Gemini)
+LLM Service → Tauri / Rust → Gemini API
   ↓
-Tauri / Rust (Backend nativo)
+Risk Engine (Evaluación local independiente)
   ↓
-Gemini API (Generación)
-  ↓
-Risk Engine (Validación local de seguridad)
-  ↓
-Historial local
+Historial local (localStorage)
 ```
 
-## Características (MVP - Sprint 02)
+## Características (MVP)
 
-- **Generación impulsada por Gemini**: Convierte comandos en español a scripts de terminal.
-- **Detección de Plataforma Real**: Detecta automáticamente el sistema operativo y el shell subyacente para proporcionar el contexto correcto.
-- **Motor de Riesgo Mejorado**: Evalúa localmente la seguridad de los comandos generados, con soporte extendido para Windows (PowerShell/CMD) y Docker, y pruebas unitarias.
-- **Historial Local**: Almacenamiento persistente de los últimos comandos generados.
-- **Atajo Global**: Integración de HotKey (Alt+Space) para acceder rápidamente al asistente.
-- **Selector de Herramientas**: Filtra explícitamente el contexto a herramientas soportadas (Git, Docker, Sistema).
-- *Kubernetes: Próximamente*.
-- *Ejecución: Actualmente deshabilitada (sólo copiar al portapapeles).*
+- **Generación con Gemini**: Convierte instrucciones en español a comandos de terminal.
+- **Detección de plataforma**: Infiere el sistema operativo y la shell objetivo (heurística, no detección exacta).
+- **Motor de riesgo local**: Evalúa independientemente el riesgo de los comandos generados, con soporte para Linux, Windows (PowerShell/CMD) y Docker.
+- **Historial local**: Almacenamiento persistente de los últimos comandos generados.
+- **Atajo global**: HotKey (Alt+Space, con fallback a Ctrl+Alt+Space) para invocar y enfocar CommandDeck.
+- **Selector de herramientas**: Filtra el contexto a Git, Docker o Sistema.
+- *Kubernetes: Próximamente.*
+- *Ejecución: Actualmente deshabilitada (solo copiar al portapapeles).*
 
 ## Stack Tecnológico
 
-- **Frontend**: React 18, TypeScript, Vite
-- **Backend**: Rust, Tauri 2
-- **Seguridad**: Motor heurístico local independiente
-- **IA**: Gemini 3.5 Flash-Lite (Google AI Studio)
+| Capa | Tecnología |
+|------|------------|
+| Frontend | React 19, TypeScript, Vite 6 |
+| Backend | Rust, Tauri 2 |
+| IA | Gemini 3.5 Flash-Lite (Google AI Studio) |
+| Seguridad | Motor heurístico local independiente |
+| Pruebas | Vitest |
+
+## HotKey Global
+
+CommandDeck registra un atajo global al iniciar:
+
+1. **Alt+Space** (preferido): Se intenta registrar primero.
+2. **Ctrl+Alt+Space** (fallback): Se registra automáticamente si Alt+Space está en conflicto con el sistema operativo (frecuente en Windows).
+
+Si ninguno puede registrarse, se imprime un error en la consola de Rust. La app sigue funcionando sin atajo.
+
+## Seguridad
+
+- La CSP (`Content-Security-Policy`) está deshabilitada (`null`) durante desarrollo. **Debe configurarse con políticas estrictas antes de cualquier release de producción.**
+- `GEMINI_API_KEY` se mantiene exclusivamente como variable de entorno del sistema. No se almacena en frontend, archivos de configuración ni logs.
+
+## Notas sobre detección de plataforma
+
+La detección de shell es una **heurística** basada en variables de entorno (`PSModulePath` en Windows, sistema operativo en Linux/macOS). No se garantiza que refleje la shell activa exacta del usuario. Los términos correctos son "shell inferida" o "shell objetivo".
 
 ## Cómo ejecutar localmente
 
 1. Configura tu variable de entorno:
-   `GEMINI_API_KEY=tu_clave_aqui`
+   ```
+   GEMINI_API_KEY=tu_clave_aqui
+   ```
 
 2. Instala dependencias:
-   `npm install`
+   ```bash
+   npm install
+   ```
 
 3. Inicia en modo desarrollo con Tauri:
-   `npm run tauri dev`
+   ```bash
+   npm run tauri dev
+   ```
 
 ## Pruebas
 
-Para ejecutar las pruebas del motor de riesgos:
-`npx vitest run`
+```bash
+npx vitest run
+```
+
+## Plataformas probadas
+
+- **Windows 10/11**: Probado activamente.
+- **Linux**: Objetivo de compatibilidad (pendiente validación exhaustiva).
+- **macOS**: Soporte básico (sin pruebas nativas realizadas).
