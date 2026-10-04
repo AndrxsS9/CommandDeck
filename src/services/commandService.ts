@@ -64,6 +64,18 @@ export async function generateCommand(
     localAssessment.level
   );
 
+  let finalReasons = [...localAssessment.reasons];
+
+  if (riskPriority[suggestion.suggestedRisk] > riskPriority[localAssessment.level]) {
+    finalReasons.push(`La IA sugirió un nivel de riesgo superior (${suggestion.suggestedRisk}) al detectado por el análisis local.`);
+  }
+
+  if (finalRisk === 'medium' || finalRisk === 'critical') {
+    finalReasons = finalReasons.filter(
+      reason => reason !== 'El comando parece realizar únicamente una consulta o lectura.'
+    );
+  }
+
   // Paso 4: Resultado final
   const finalResult = {
     id: crypto.randomUUID(),
@@ -75,7 +87,7 @@ export async function generateCommand(
     aiRisk: suggestion.suggestedRisk,
     localRisk: localAssessment.level,
     risk: finalRisk,
-    riskReasons: localAssessment.reasons,
+    riskReasons: finalReasons,
     reversible: localAssessment.reversible,
     destructive: localAssessment.destructive,
     requiresConfirmation:
