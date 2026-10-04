@@ -1,4 +1,4 @@
-import { useState, useEffect, forwardRef } from 'react';
+import { useState, useEffect } from 'react';
 import { getHistory, clearHistory, type HistoryEntry } from '../services/historyService';
 import { ToolIcon, type ToolIconName } from './ToolIcon';
 
@@ -14,7 +14,7 @@ interface RecentCommandsProps {
   onReuse: (intent: string) => void;
 }
 
-export const RecentCommands = forwardRef<HTMLElement, RecentCommandsProps>(({ onReuse }, ref) => {
+export function RecentCommands({ onReuse }: RecentCommandsProps) {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
 
   useEffect(() => {
@@ -29,7 +29,7 @@ export const RecentCommands = forwardRef<HTMLElement, RecentCommandsProps>(({ on
   }, []);
 
   return (
-    <aside className="recent-panel" ref={ref}>
+    <aside className="recent-panel">
       <div className="recent-panel__header">
         <div className="recent-panel__title">
           <ToolIcon name="history" />
@@ -100,4 +100,4 @@ export const RecentCommands = forwardRef<HTMLElement, RecentCommandsProps>(({ on
       </div>
     </aside>
   );
-});
+}

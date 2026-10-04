@@ -15,7 +15,6 @@ const navItems: SidebarItem[] = [
   { id: 'docker', label: 'Contenedores Docker', tool: 'docker', icon: 'docker' },
   { id: 'kubernetes', label: 'Kubernetes', tool: 'kubernetes', icon: 'kubernetes' },
   { id: 'system', label: 'Comandos del sistema', tool: 'system', icon: 'system' },
-  { id: 'history', label: 'Historial', icon: 'history' },
 ];
 
 interface SidebarProps {
