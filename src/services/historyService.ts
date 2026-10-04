@@ -20,33 +20,40 @@ export function getHistory(): HistoryEntry[] {
       return JSON.parse(raw);
     }
   } catch (e) {
-    console.error('Failed to parse history', e);
+    console.warn('[CommandDeck] No se pudo leer el historial:', e);
   }
   return [];
 }
 
-export function addHistoryEntry(entry: Omit<HistoryEntry, 'id' | 'timestamp'>) {
-  const current = getHistory();
-  
-  // Evitar duplicados consecutivos basados en intent
-  if (current.length > 0 && current[0].intent === entry.intent) {
-    return;
+export function addHistoryEntry(entry: Omit<HistoryEntry, 'id' | 'timestamp'>): void {
+  try {
+    const current = getHistory();
+    
+    // Evitar duplicados consecutivos basados en intent
+    if (current.length > 0 && current[0].intent === entry.intent) {
+      return;
+    }
+
+    const newEntry: HistoryEntry = {
+      ...entry,
+      id: crypto.randomUUID(),
+      timestamp: Date.now()
+    };
+
+    const updated = [newEntry, ...current].slice(0, MAX_HISTORY);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+    
+    window.dispatchEvent(new Event('history_updated'));
+  } catch (e) {
+    console.warn('[CommandDeck] No se pudo guardar en el historial:', e);
   }
-
-  const newEntry: HistoryEntry = {
-    ...entry,
-    id: crypto.randomUUID(),
-    timestamp: Date.now()
-  };
-
-  const updated = [newEntry, ...current].slice(0, MAX_HISTORY);
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
-  
-  // Disparar evento para que UI actualice
-  window.dispatchEvent(new Event('history_updated'));
 }
 
-export function clearHistory() {
-  localStorage.removeItem(HISTORY_KEY);
-  window.dispatchEvent(new Event('history_updated'));
+export function clearHistory(): void {
+  try {
+    localStorage.removeItem(HISTORY_KEY);
+    window.dispatchEvent(new Event('history_updated'));
+  } catch (e) {
+    console.warn('[CommandDeck] No se pudo limpiar el historial:', e);
+  }
 }
