@@ -23,7 +23,7 @@ const suggestions = [
 function App() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [activeTab, setActiveTab] = useState('home');
-  const [activeTool, setActiveTool] = useState<CommandTool | 'all'>('git');
+  const [activeTool, setActiveTool] = useState<CommandTool | 'all'>('all');
   
   const [intent, setIntent] = useState('');
   const [result, setResult] = useState<(CommandResult & { platformContext: PlatformContext }) | null>(null);
@@ -56,8 +56,7 @@ function App() {
     }
   }, [copied]);
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
+  async function generateCurrentIntent() {
     if (!intent.trim()) return;
     
     setLoading(true);
@@ -79,6 +78,11 @@ function App() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    await generateCurrentIntent();
   }
 
   async function copyCommand() {
@@ -129,7 +133,7 @@ function App() {
             {loading && <LoadingState />}
             
             {errorMsg && (
-              <ErrorState message={errorMsg} onRetry={() => handleSubmit({ preventDefault: () => {} } as FormEvent)} />
+              <ErrorState message={errorMsg} onRetry={generateCurrentIntent} />
             )}
 
             {result && !loading && !errorMsg && (

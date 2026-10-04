@@ -6,7 +6,16 @@ interface ToolSelectorProps {
   onSelectTool: (tool: CommandTool | 'all') => void;
 }
 
-const tools: { id: CommandTool | 'all'; label: string; disabled?: boolean; icon: ReactNode }[] = [
+const tools: { id: CommandTool | 'all' | 'kubernetes'; label: string; disabled?: boolean; icon: ReactNode }[] = [
+  {
+    id: 'all',
+    label: 'Auto',
+    icon: (
+      <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+      </svg>
+    ),
+  },
   {
     id: 'git',
     label: 'Git',
@@ -30,7 +39,7 @@ const tools: { id: CommandTool | 'all'; label: string; disabled?: boolean; icon:
     ),
   },
   {
-    id: 'unknown' as CommandTool,
+    id: 'kubernetes',
     label: 'K8s',
     disabled: true,
     icon: (
@@ -41,7 +50,7 @@ const tools: { id: CommandTool | 'all'; label: string; disabled?: boolean; icon:
   },
   {
     id: 'system',
-    label: 'Linux',
+    label: 'Sistema',
     icon: (
       <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <rect x="3" y="4" width="18" height="16" rx="2" />
@@ -60,7 +69,7 @@ export function ToolSelector({ activeTool, onSelectTool }: ToolSelectorProps) {
           className={`tool-selector__btn ${
             activeTool === tool.id ? 'tool-selector__btn--active' : ''
           } ${tool.disabled ? 'tool-selector__btn--disabled' : ''}`}
-          onClick={() => !tool.disabled && onSelectTool(tool.id)}
+          onClick={() => !tool.disabled && onSelectTool(tool.id as CommandTool | 'all')}
           disabled={tool.disabled}
           title={tool.disabled ? 'Próximamente' : tool.label}
         >

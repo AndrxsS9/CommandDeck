@@ -110,7 +110,8 @@ Reglas:
    read, low, medium, critical
 7. Tu clasificación de riesgo NO es definitiva.
 8. Si no puedes determinar un comando razonable, utiliza tool = "unknown".
-9. Ten en cuenta el sistema operativo, la shell y la herramienta preferida proporcionada para generar un comando compatible y exacto.
+9. Ten en cuenta el sistema operativo y la shell para generar un comando compatible y exacto.
+10. Si preferredTool = "auto", determina la herramienta adecuada entre git, docker o system según la intención. De lo contrario, úsala como preferencia explícita.
 
 Devuelve únicamente JSON válido.
 
