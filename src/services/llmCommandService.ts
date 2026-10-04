@@ -52,7 +52,7 @@ export async function generateLLMSuggestion(
         intent,
         platform: platformContext.os,
         shell: platformContext.shell,
-        preferredTool: preferredTool === 'all' ? 'unknown' : preferredTool
+        preferredTool: preferredTool === 'all' ? 'auto' : preferredTool
       }
     );
 

@@ -17,6 +17,7 @@ enum RiskLevel {
 enum CommandTool {
     Git,
     Docker,
+    Kubernetes,
     System,
     Unknown,
 }
@@ -97,6 +98,7 @@ CommandDeck está orientado inicialmente a:
 
 - Git
 - Docker
+- Kubernetes
 - comandos básicos del sistema
 
 Reglas:
@@ -110,7 +112,9 @@ Reglas:
    read, low, medium, critical
 7. Tu clasificación de riesgo NO es definitiva.
 8. Si no puedes determinar un comando razonable, utiliza tool = "unknown".
-9. Ten en cuenta el sistema operativo, la shell y la herramienta preferida proporcionada para generar un comando compatible y exacto.
+9. Ten en cuenta el sistema operativo y la shell para generar un comando compatible y exacto.
+10. Si preferredTool = "auto", determina la herramienta adecuada entre git, docker, kubernetes o system según la intención. De lo contrario, úsala como preferencia explícita.
+11. Si preferredTool = "kubernetes" o la intención lo requiere, prioriza comandos `kubectl` (e.g. `kubectl get pods`). No ejecutes nada, solo sugiere el comando adecuado.
 
 Devuelve únicamente JSON válido.
 
@@ -119,7 +123,7 @@ La estructura debe ser exactamente:
 {
   "intent": "texto original",
   "command": "comando",
-  "tool": "git | docker | system | unknown",
+  "tool": "git | docker | kubernetes | system | unknown",
   "summary": "explicación breve",
   "explanation": [
     "parte 1",

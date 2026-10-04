@@ -56,7 +56,7 @@ export const CommandInput = forwardRef<CommandInputHandle, CommandInputProps>(
           </div>
           <span className="command-input-card__model-badge">
             <span className="command-input-card__model-dot" />
-            Modelo Listo
+            Asistente disponible
           </span>
         </div>
 

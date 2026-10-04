@@ -13,11 +13,13 @@ const destructivePatterns = [
   // Linux
   /\brm\s+(?:-[a-z]*r[a-z]*|--recursive)\b/i,
   /\brm\s+(?:-[a-z]*f[a-z]*|--force)\b/i,
+  /\brm\s+(?!-)\S+/i, // Eliminación simple Linux
 
   // Windows PowerShell
   /\bRemove-Item\b.*-Recurse\b.*-Force\b/i,
   /\bRemove-Item\b.*-Force\b.*-Recurse\b/i,
   /\bRemove-Item\b.*-Force\b/i,
+  /\bRemove-Item\s+(?!-)\S+/i, // Eliminación simple PowerShell
   /\bStop-Process\b.*-Force\b/i,
   /\bFormat-Volume\b/i,
   /\bClear-Disk\b/i,
@@ -26,21 +28,29 @@ const destructivePatterns = [
   // Windows CMD
   /\bdel\b.*\s+\/s\b.*\s+\/q\b/i,
   /\bdel\b.*\s+\/q\b.*\s+\/s\b/i,
+  /\bdel\s+(?!\/)\S+/i, // Eliminación simple CMD
   /\brmdir\b.*\s+\/s\b.*\s+\/q\b/i,
   /\brmdir\b.*\s+\/q\b.*\s+\/s\b/i,
+  /\brmdir\s+(?!\/)\S+/i,
   /\brd\b.*\s+\/s\b.*\s+\/q\b/i,
   /\brd\b.*\s+\/q\b.*\s+\/s\b/i,
+  /\brd\s+(?!\/)\S+/i,
   /\btaskkill\b.*\s+\/F\b/i,
 
+  // Kubernetes
+  /\bkubectl\s+delete\b/i,
+  /\bkubectl\s+replace\b.*\s+--force\b/i,
+
   // Filesystem general
-  /\bformat\b/i,
+  /\bformat\s+[a-z]:/i,
   /\bmkfs\b/i,
   /\bdd\s+if=/i,
-  
+
   // Git
   /\bgit\s+reset\s+--hard\b/i,
   /\bgit\s+clean\s+-[a-z]*f/i,
   /\bgit\s+branch\s+-D\b/i,
+  /\bgit\s+push\b.*\s+(?:-f|--force)(?:\s|$)/i,
 
   // Docker ampliado
   /\bdocker\s+system\s+prune\b/i,
@@ -64,10 +74,12 @@ const mediumPatterns = [
   /\bgit\s+rebase\b/i,
   /\bgit\s+branch\s+-d\b/i,
   /\bgit\s+push\b/i,
-  /\bgit\s+push\b.*\s+(?:-f|--force)\b/i,
 
   /\bkill\b/i,
   /\btaskkill\b/i,
+
+  // Kubernetes
+  /\bkubectl\s+(?:apply|create|scale|rollout|set|patch)\b/i,
 ];
 
 /**

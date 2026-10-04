@@ -17,7 +17,18 @@ export function getHistory(): HistoryEntry[] {
   try {
     const raw = localStorage.getItem(HISTORY_KEY);
     if (raw) {
-      return JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(item => 
+          item && 
+          item.id && 
+          item.intent && 
+          item.command && 
+          item.tool && 
+          item.risk && 
+          item.timestamp
+        ).slice(0, MAX_HISTORY);
+      }
     }
   } catch (e) {
     console.warn('[CommandDeck] No se pudo leer el historial:', e);

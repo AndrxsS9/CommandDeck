@@ -72,4 +72,89 @@ describe('Risk Engine', () => {
     const result2 = assessRisk('echo test ; Remove-Item ./build -Force -Recurse');
     expect(result2.level).toBe('critical');
   });
+
+  // --- Falsos positivos de Format ---
+  it('evita falsos positivos de format en comandos no destructivos', () => {
+    expect(assessRisk('git log --format=oneline').level).toBe('read');
+    expect(assessRisk('git log --pretty=format:"%h %s"').level).toBe('read');
+    expect(assessRisk('docker inspect --format "{{.Id}}" container').level).toBe('read');
+  });
+
+  // --- Format Destructivo ---
+  it('detecta comandos format destructivos en Windows', () => {
+    expect(assessRisk('format C:').level).toBe('critical');
+    expect(assessRisk('format D: /FS:NTFS').level).toBe('critical');
+  });
+
+  // --- Git Push ---
+  it('detecta git push force como critico', () => {
+    const res1 = assessRisk('git push --force origin main');
+    expect(res1.level).toBe('critical');
+    expect(res1.destructive).toBe(true);
+    expect(res1.requiresConfirmation).toBe(true);
+
+    const res2 = assessRisk('git push -f origin main');
+    expect(res2.level).toBe('critical');
+    expect(res2.destructive).toBe(true);
+  });
+
+  it('clasifica git push --force-with-lease como minimo medium', () => {
+    const res = assessRisk('git push --force-with-lease origin main');
+    // Ya que no entra en critical y push está en medium:
+    expect(res.level).not.toBe('read');
+    expect(res.level).not.toBe('low');
+  });
+
+  // --- Eliminación simple ---
+  it('detecta eliminación simple en Linux', () => {
+    const rm = assessRisk('rm archivo.txt');
+    expect(rm.level).toBe('critical');
+    expect(rm.destructive).toBe(true);
+    expect(rm.requiresConfirmation).toBe(true);
+  });
+
+  it('detecta eliminación simple en PowerShell', () => {
+    const rmItem = assessRisk('Remove-Item archivo.txt');
+    expect(rmItem.level).toBe('critical');
+    expect(rmItem.destructive).toBe(true);
+  });
+
+  it('detecta eliminación simple en CMD', () => {
+    const del = assessRisk('del archivo.txt');
+    expect(del.level).toBe('critical');
+    expect(del.destructive).toBe(true);
+
+    const rmdir = assessRisk('rmdir carpeta');
+    expect(rmdir.level).toBe('critical');
+
+    const rd = assessRisk('rd carpeta');
+    expect(rd.level).toBe('critical');
+  });
+
+  // --- Kubernetes ---
+  it('detecta comandos de lectura en Kubernetes', () => {
+    expect(assessRisk('kubectl get pods').level).toBe('read');
+    expect(assessRisk('kubectl describe pod api').level).toBe('read');
+    expect(assessRisk('kubectl logs api').level).toBe('read');
+    expect(assessRisk('kubectl config current-context').level).toBe('read');
+  });
+
+  it('detecta comandos de riesgo medio en Kubernetes', () => {
+    const apply = assessRisk('kubectl apply -f deployment.yaml');
+    expect(apply.level).toBe('medium');
+    expect(apply.requiresConfirmation).toBe(true);
+
+    expect(assessRisk('kubectl scale deployment api --replicas=0').level).toBe('medium');
+    expect(assessRisk('kubectl rollout restart deployment api').level).toBe('medium');
+  });
+
+  it('detecta comandos criticos destructivos en Kubernetes', () => {
+    const delPod = assessRisk('kubectl delete pod api');
+    expect(delPod.level).toBe('critical');
+    expect(delPod.destructive).toBe(true);
+    expect(delPod.requiresConfirmation).toBe(true);
+
+    expect(assessRisk('kubectl delete namespace production').level).toBe('critical');
+    expect(assessRisk('kubectl replace --force -f deployment.yaml').level).toBe('critical');
+  });
 });

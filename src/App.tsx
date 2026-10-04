@@ -15,15 +15,16 @@ import { LoadingState } from './components/LoadingState';
 import { ErrorState } from './components/ErrorState';
 
 const suggestions = [
-  'Mostrar el estado del repositorio Git',
+  'Mostrar las ramas locales de Git',
   'Listar contenedores Docker activos',
-  'Crear una carpeta llamada logs',
+  'Listar los pods de Kubernetes',
+  'Crear una carpeta llamada logs'
 ];
 
 function App() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [activeTab, setActiveTab] = useState('home');
-  const [activeTool, setActiveTool] = useState<CommandTool | 'all'>('git');
+  const [activeTool, setActiveTool] = useState<CommandTool | 'all'>('all');
   
   const [intent, setIntent] = useState('');
   const [result, setResult] = useState<(CommandResult & { platformContext: PlatformContext }) | null>(null);
@@ -56,8 +57,7 @@ function App() {
     }
   }, [copied]);
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
+  async function generateCurrentIntent() {
     if (!intent.trim()) return;
     
     setLoading(true);
@@ -69,9 +69,6 @@ function App() {
     try {
       const commandResult = await generateCommand(intent, activeTool);
       setResult(commandResult);
-      if (commandResult.tool && commandResult.tool !== 'unknown') {
-        setActiveTool(commandResult.tool);
-      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       console.error('Error al generar comando:', message);
@@ -79,6 +76,11 @@ function App() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    await generateCurrentIntent();
   }
 
   async function copyCommand() {
@@ -94,6 +96,24 @@ function App() {
     }
   }
 
+  function handleSidebarSelection(id: string) {
+    setActiveTab(id);
+    if (id === 'home') setActiveTool('all');
+    else if (id === 'git') setActiveTool('git');
+    else if (id === 'docker') setActiveTool('docker');
+    else if (id === 'kubernetes') setActiveTool('kubernetes');
+    else if (id === 'system') setActiveTool('system');
+  }
+
+  function handleToolSelection(tool: CommandTool | 'all') {
+    setActiveTool(tool);
+    if (tool === 'all') setActiveTab('home');
+    else if (tool === 'git') setActiveTab('git');
+    else if (tool === 'docker') setActiveTab('docker');
+    else if (tool === 'kubernetes') setActiveTab('kubernetes');
+    else if (tool === 'system') setActiveTab('system');
+  }
+
   return (
     <div className="app-layout">
       <AppHeader 
@@ -102,7 +122,7 @@ function App() {
       />
 
       <div className="app-body">
-        <Sidebar activeItem={activeTab} onSelectItem={setActiveTab} />
+        <Sidebar activeItem={activeTab} onSelectItem={handleSidebarSelection} />
 
         <main className="main-content">
           <div className="main-content__inner">
@@ -113,7 +133,7 @@ function App() {
                   Genera, analiza el riesgo e inspecciona comandos de infraestructura.
                 </p>
               </div>
-              <ToolSelector activeTool={activeTool} onSelectTool={setActiveTool} />
+              <ToolSelector activeTool={activeTool} onSelectTool={handleToolSelection} />
             </div>
 
             <CommandInput
@@ -123,13 +143,17 @@ function App() {
               onSubmit={handleSubmit}
               loading={loading}
               suggestions={suggestions}
-              onSuggestionClick={(s) => setIntent(s)}
+              onSuggestionClick={(s) => {
+                setIntent(s);
+                setActiveTool('all');
+                setActiveTab('home');
+              }}
             />
 
             {loading && <LoadingState />}
             
             {errorMsg && (
-              <ErrorState message={errorMsg} onRetry={() => handleSubmit({ preventDefault: () => {} } as FormEvent)} />
+              <ErrorState message={errorMsg} onRetry={generateCurrentIntent} />
             )}
 
             {result && !loading && !errorMsg && (
@@ -158,7 +182,11 @@ function App() {
           </div>
         </main>
 
-        <RecentCommands onReuse={(cmd) => setIntent(cmd)} />
+        <RecentCommands onReuse={(cmd) => {
+          setIntent(cmd);
+          setActiveTool('all');
+          setActiveTab('home');
+        }} />
       </div>
     </div>
   );
