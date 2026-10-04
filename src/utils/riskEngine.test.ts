@@ -104,4 +104,30 @@ describe('Risk Engine', () => {
     expect(res.level).not.toBe('read');
     expect(res.level).not.toBe('low');
   });
+
+  // --- Eliminación simple ---
+  it('detecta eliminación simple en Linux', () => {
+    const rm = assessRisk('rm archivo.txt');
+    expect(rm.level).toBe('critical');
+    expect(rm.destructive).toBe(true);
+    expect(rm.requiresConfirmation).toBe(true);
+  });
+
+  it('detecta eliminación simple en PowerShell', () => {
+    const rmItem = assessRisk('Remove-Item archivo.txt');
+    expect(rmItem.level).toBe('critical');
+    expect(rmItem.destructive).toBe(true);
+  });
+
+  it('detecta eliminación simple en CMD', () => {
+    const del = assessRisk('del archivo.txt');
+    expect(del.level).toBe('critical');
+    expect(del.destructive).toBe(true);
+
+    const rmdir = assessRisk('rmdir carpeta');
+    expect(rmdir.level).toBe('critical');
+
+    const rd = assessRisk('rd carpeta');
+    expect(rd.level).toBe('critical');
+  });
 });
