@@ -2,12 +2,10 @@ import { FormEvent, useState, useEffect, useRef } from 'react';
 import { writeText } from '@tauri-apps/plugin-clipboard-manager';
 import { listen } from '@tauri-apps/api/event';
 import { generateCommand } from './services/commandService';
-import type { CommandResult, CommandTool, PlatformContext } from './types/command';
+import type { CommandResult, PlatformContext } from './types/command';
 import './styles.css';
 
 import { AppHeader } from './components/AppHeader';
-import { Sidebar } from './components/Sidebar';
-import { ToolSelector } from './components/ToolSelector';
 import { CommandInput, type CommandInputHandle } from './components/CommandInput';
 import { CommandResultCard } from './components/CommandResultCard';
 import { RecentCommands } from './components/RecentCommands';
@@ -23,9 +21,7 @@ const suggestions = [
 
 function App() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
-  const [activeTab, setActiveTab] = useState('home');
-  const [activeTool, setActiveTool] = useState<CommandTool | 'all'>('all');
-  
+
   const [intent, setIntent] = useState('');
   const [result, setResult] = useState<(CommandResult & { platformContext: PlatformContext }) | null>(null);
   const [loading, setLoading] = useState(false);
@@ -67,7 +63,8 @@ function App() {
     setCopied(false);
     
     try {
-      const commandResult = await generateCommand(intent, activeTool);
+      // La herramienta se infiere siempre automáticamente desde la intención
+      const commandResult = await generateCommand(intent, 'all');
       setResult(commandResult);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
@@ -96,24 +93,6 @@ function App() {
     }
   }
 
-  function handleSidebarSelection(id: string) {
-    setActiveTab(id);
-    if (id === 'home') setActiveTool('all');
-    else if (id === 'git') setActiveTool('git');
-    else if (id === 'docker') setActiveTool('docker');
-    else if (id === 'kubernetes') setActiveTool('kubernetes');
-    else if (id === 'system') setActiveTool('system');
-  }
-
-  function handleToolSelection(tool: CommandTool | 'all') {
-    setActiveTool(tool);
-    if (tool === 'all') setActiveTab('home');
-    else if (tool === 'git') setActiveTab('git');
-    else if (tool === 'docker') setActiveTab('docker');
-    else if (tool === 'kubernetes') setActiveTab('kubernetes');
-    else if (tool === 'system') setActiveTab('system');
-  }
-
   return (
     <div className="app-layout">
       <AppHeader 
@@ -122,18 +101,16 @@ function App() {
       />
 
       <div className="app-body">
-        <Sidebar activeItem={activeTab} onSelectItem={handleSidebarSelection} />
-
         <main className="main-content">
           <div className="main-content__inner">
             <div className="workspace-header">
-              <div>
-                <h1 className="workspace-header__title">Asistente IA de Terminal</h1>
-                <p className="workspace-header__subtitle">
-                  Genera, analiza el riesgo e inspecciona comandos de infraestructura.
-                </p>
-              </div>
-              <ToolSelector activeTool={activeTool} onSelectTool={handleToolSelection} />
+              <h1 className="workspace-header__title">Asistente IA de Terminal</h1>
+              <p className="workspace-header__subtitle">
+                Genera, analiza el riesgo e inspecciona comandos de infraestructura.
+              </p>
+              <p className="workspace-header__compat">
+                Compatible con Git, Docker, Kubernetes y comandos del sistema.
+              </p>
             </div>
 
             <CommandInput
@@ -143,11 +120,7 @@ function App() {
               onSubmit={handleSubmit}
               loading={loading}
               suggestions={suggestions}
-              onSuggestionClick={(s) => {
-                setIntent(s);
-                setActiveTool('all');
-                setActiveTab('home');
-              }}
+              onSuggestionClick={setIntent}
             />
 
             {loading && <LoadingState />}
@@ -182,11 +155,7 @@ function App() {
           </div>
         </main>
 
-        <RecentCommands onReuse={(cmd) => {
-          setIntent(cmd);
-          setActiveTool('all');
-          setActiveTab('home');
-        }} />
+        <RecentCommands onReuse={setIntent} />
       </div>
     </div>
   );
