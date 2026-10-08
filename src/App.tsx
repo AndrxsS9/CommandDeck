@@ -30,7 +30,7 @@ function getInitialTheme(): Theme {
 }
 
 function App() {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
 
   const [intent, setIntent] = useState('');
@@ -80,7 +80,7 @@ function App() {
     
     try {
       // La herramienta se infiere siempre automáticamente desde la intención
-      const commandResult = await generateCommand(intent, 'all');
+      const commandResult = await generateCommand(intent, 'all', language);
       setResult(commandResult);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);

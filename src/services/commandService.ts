@@ -9,6 +9,7 @@ import { generateLLMSuggestion, getPlatformContext } from './llmCommandService';
 
 import { assessRisk } from '../utils/riskEngine';
 import { addHistoryEntry } from './historyService';
+import type { Language } from '../i18n/translations';
 
 /**
  * Jerarquía de riesgo.
@@ -45,14 +46,15 @@ function getHighestRisk(
  */
 export async function generateCommand(
   intent: string,
-  preferredTool: CommandTool | 'all'
+  preferredTool: CommandTool | 'all',
+  language: Language
 ): Promise<CommandResult & { platformContext: PlatformContext }> {
 
   const platformContext = await getPlatformContext();
 
   // Paso 1: Generación con Gemini
   const suggestion =
-    await generateLLMSuggestion(intent, platformContext, preferredTool);
+    await generateLLMSuggestion(intent, platformContext, preferredTool, language);
 
   // Paso 2: Evaluación independiente de riesgo
   const localAssessment =
