@@ -11,13 +11,8 @@ import { CommandResultCard } from './components/CommandResultCard';
 import { RecentCommands } from './components/RecentCommands';
 import { LoadingState } from './components/LoadingState';
 import { ErrorState } from './components/ErrorState';
-
-const suggestions = [
-  'Mostrar las ramas locales de Git',
-  'Listar contenedores Docker activos',
-  'Listar los pods de Kubernetes',
-  'Crear una carpeta llamada logs'
-];
+import { useI18n } from './i18n/LanguageContext';
+import { ToolIcon } from './components/ToolIcon';
 
 type Theme = 'dark' | 'light';
 
@@ -35,13 +30,14 @@ function getInitialTheme(): Theme {
 }
 
 function App() {
+  const { t } = useI18n();
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
 
   const [intent, setIntent] = useState('');
   const [result, setResult] = useState<(CommandResult & { platformContext: PlatformContext }) | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState<keyof typeof t.status | null>(null);
   const [copied, setCopied] = useState(false);
 
   const commandInputRef = useRef<CommandInputHandle>(null);
@@ -78,7 +74,7 @@ function App() {
     
     setLoading(true);
     setErrorMsg('');
-    setStatus('');
+    setStatus(null);
     setResult(null);
     setCopied(false);
     
@@ -105,11 +101,11 @@ function App() {
     try {
       await writeText(result.command);
       setCopied(true);
-      setStatus('Comando copiado al portapapeles.');
+      setStatus('copied');
     } catch {
       await navigator.clipboard.writeText(result.command);
       setCopied(true);
-      setStatus('Comando copiado al portapapeles.');
+      setStatus('copied');
     }
   }
 
@@ -117,20 +113,27 @@ function App() {
     <div className="app-layout">
       <AppHeader 
         theme={theme} 
-        onToggleTheme={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} 
+        onToggleTheme={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')} 
       />
 
       <div className="app-body">
         <main className="main-content">
           <div className="main-content__inner">
+            <div className="hero-bg"></div>
             <div className="workspace-header">
-              <h1 className="workspace-header__title">Asistente IA de Terminal</h1>
+              <h1 className="workspace-header__title">{t.workspace.title}</h1>
               <p className="workspace-header__subtitle">
-                Genera, analiza el riesgo e inspecciona comandos de infraestructura.
+                {t.workspace.subtitle}
               </p>
-              <p className="workspace-header__compat">
-                Compatible con Git, Docker, Kubernetes y comandos del sistema.
-              </p>
+              <div className="workspace-header__compat">
+                <span>{t.workspace.compat}</span>
+                <div className="compat-badges">
+                  <div className="compat-badge"><ToolIcon name="git" /> Git</div>
+                  <div className="compat-badge"><ToolIcon name="docker" /> Docker</div>
+                  <div className="compat-badge"><ToolIcon name="kubernetes" /> Kubernetes</div>
+                  <div className="compat-badge"><ToolIcon name="system" /> {t.tools.system}</div>
+                </div>
+              </div>
             </div>
 
             <CommandInput
@@ -139,7 +142,7 @@ function App() {
               onIntentChange={setIntent}
               onSubmit={handleSubmit}
               loading={loading}
-              suggestions={suggestions}
+              suggestions={t.suggestions}
               onSuggestionClick={setIntent}
             />
 
@@ -164,13 +167,13 @@ function App() {
             {!result && !loading && !errorMsg && (
               <div className="empty-state">
                 <p className="empty-state__text">
-                  Escribe una intención en español. CommandDeck la convertirá en una propuesta de comando y evaluará su nivel de riesgo antes de cualquier acción.
+                  {t.emptyState}
                 </p>
               </div>
             )}
             
             {status && (
-              <div className="status-bar">{status}</div>
+              <div className="status-bar">{t.status[status]}</div>
             )}
           </div>
         </main>
