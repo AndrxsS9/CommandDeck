@@ -1,20 +1,26 @@
 import { useState, useEffect } from 'react';
 import { getHistory, clearHistory, type HistoryEntry } from '../services/historyService';
+import { useI18n } from '../i18n/LanguageContext';
 import { ToolIcon, type ToolIconName } from './ToolIcon';
-
-const toolLabels: Record<string, string> = {
-  git: 'Git',
-  docker: 'Docker',
-  kubernetes: 'Kubernetes',
-  unknown: 'Desconocido', 
-  system: 'Sistema',
-};
 
 interface RecentCommandsProps {
   onReuse: (intent: string) => void;
 }
 
+function formatRecentDate(ts: number, t: any) {
+  const date = new Date(ts);
+  const now = new Date();
+  const isToday = date.getDate() === now.getDate() && date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+  const locale = t.history.locale;
+
+  if (isToday) {
+    return `${t.recent.today}, ${date.toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' })}`;
+  }
+  return date.toLocaleDateString(locale, { month: 'short', day: 'numeric' });
+}
+
 export function RecentCommands({ onReuse }: RecentCommandsProps) {
+  const { t } = useI18n();
   const [history, setHistory] = useState<HistoryEntry[]>([]);
 
   useEffect(() => {
@@ -33,14 +39,15 @@ export function RecentCommands({ onReuse }: RecentCommandsProps) {
       <div className="recent-panel__header">
         <div className="recent-panel__title">
           <ToolIcon name="history" />
-          <span>Recientes</span>
+          <span>{t.recent.title}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span className="recent-panel__count">{history.length} guardados</span>
+          <span className="recent-panel__count">{history.length} {t.recent.saved}</span>
           {history.length > 0 && (
             <button
+              id="clear-history"
               onClick={() => {
-                if (window.confirm('¿Estás seguro de que quieres limpiar el historial?')) {
+                if (window.confirm(t.recent.clearConfirm)) {
                   clearHistory();
                 }
               }}
@@ -53,7 +60,7 @@ export function RecentCommands({ onReuse }: RecentCommandsProps) {
                 textDecoration: 'underline'
               }}
             >
-              Limpiar
+              {t.recent.clear}
             </button>
           )}
         </div>
@@ -65,22 +72,28 @@ export function RecentCommands({ onReuse }: RecentCommandsProps) {
             <div className="recent-item__header">
               <span className="recent-item__tool">
                 <ToolIcon name={(item.tool as ToolIconName) || 'unknown'} />
-                {toolLabels[item.tool] || toolLabels['unknown']}
+                {t.tools[item.tool] || t.tools['unknown']}
               </span>
+              <span className={`recent-item__risk recent-item__risk--${item.risk}`}>
+                {item.risk === 'critical' ? '●' : item.risk === 'medium' ? '●' : '●'} {t.risk.labels[item.risk as keyof typeof t.risk.labels] || item.risk}
+              </span>
+              <span className="recent-item__time">{formatRecentDate(item.timestamp, t)}</span>
+            </div>
+            <code className="recent-item__command">{item.command}</code>
+            <p className="recent-item__desc" title={item.desc}>{item.desc}</p>
+            <div className="recent-item__footer">
               <button
                 className="recent-item__reuse"
                 onClick={() => onReuse(item.intent)}
-                aria-label={`Reutilizar ${item.intent}`}
+                aria-label={`${t.recent.reuseAria} ${item.intent}`}
               >
-                Reutilizar
+                {t.recent.reuse}
                 <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <polyline points="7 17 17 7" />
                   <polyline points="7 7 17 7 17 17" />
                 </svg>
               </button>
             </div>
-            <code className="recent-item__command">{item.command}</code>
-            <p className="recent-item__desc" title={item.desc}>{item.desc}</p>
           </div>
         ))}
       </div>
@@ -92,10 +105,10 @@ export function RecentCommands({ onReuse }: RecentCommandsProps) {
             <line x1="12" y1="16" x2="12" y2="12" />
             <line x1="12" y1="8" x2="12.01" y2="8" />
           </svg>
-          Flujo recomendado
+          {t.recent.tipTitle}
         </div>
         <p className="tip-card__text">
-          Describe → Genera → Revisa parámetros y nivel de riesgo antes de copiar el comando.
+          {t.recent.tipText}
         </p>
       </div>
     </aside>
