@@ -5,6 +5,7 @@ import type {
   PlatformContext,
   CommandTool
 } from '../types/command';
+import type { Language } from '../i18n/translations';
 
 /**
  * Comprueba si estamos dentro del runtime de Tauri.
@@ -34,7 +35,8 @@ export async function getPlatformContext(): Promise<PlatformContext> {
 export async function generateLLMSuggestion(
   intent: string,
   platformContext: PlatformContext,
-  preferredTool: CommandTool | 'all'
+  preferredTool: CommandTool | 'all',
+  language: Language
 ): Promise<CommandSuggestion> {
 
   if (!isTauriRuntime()) {
@@ -52,7 +54,8 @@ export async function generateLLMSuggestion(
         intent,
         platform: platformContext.os,
         shell: platformContext.shell,
-        preferredTool: preferredTool === 'all' ? 'auto' : preferredTool
+        preferredTool: preferredTool === 'all' ? 'auto' : preferredTool,
+        language
       }
     );
 

@@ -1,4 +1,5 @@
 import { FormEvent, forwardRef, useRef, useEffect, useImperativeHandle } from 'react';
+import { useI18n } from '../i18n/LanguageContext';
 
 export interface CommandInputHandle {
   focus: () => void;
@@ -19,6 +20,7 @@ export const CommandInput = forwardRef<CommandInputHandle, CommandInputProps>(
     ref
   ) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const { t } = useI18n();
 
     useEffect(() => {
       if (textareaRef.current) {
@@ -47,17 +49,11 @@ export const CommandInput = forwardRef<CommandInputHandle, CommandInputProps>(
         {/* Header */}
         <div className="command-input-card__header">
           <div className="command-input-card__title-group">
-            <div className="command-input-card__icon">
-              <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
+            <div className="command-input-card__title-text">
+              <h2 className="command-input-card__title">{t.input.title}</h2>
+              <p className="command-input-card__subtitle">{t.input.subtitle}</p>
             </div>
-            <h2 className="command-input-card__title">Traductor en Lenguaje Natural</h2>
           </div>
-          <span className="command-input-card__model-badge">
-            <span className="command-input-card__model-dot" />
-            Asistente disponible
-          </span>
         </div>
 
         {/* Textarea */}
@@ -69,14 +65,14 @@ export const CommandInput = forwardRef<CommandInputHandle, CommandInputProps>(
             value={intent}
             onChange={(e) => onIntentChange(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Describe lo que quieres hacer en lenguaje natural..."
-            aria-label="Describe tu intención"
+            placeholder={t.input.placeholder}
+            aria-label={t.input.ariaLabel}
           />
 
           {/* Footer */}
           <div className="command-input-card__footer">
             <div className="command-input-card__suggestions">
-              <span className="command-input-card__suggestions-label">Sugerencias:</span>
+              <span className="command-input-card__suggestions-label">{t.input.suggestionsLabel}</span>
               {suggestions.map((s) => (
                 <button
                   key={s}
@@ -97,7 +93,7 @@ export const CommandInput = forwardRef<CommandInputHandle, CommandInputProps>(
               <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
               </svg>
-              <span>{loading ? 'Generando…' : 'Generar comando'}</span>
+              <span>{loading ? t.input.generating : t.input.generate}</span>
             </button>
           </div>
         </form>

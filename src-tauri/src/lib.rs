@@ -76,6 +76,7 @@ async fn generate_command_with_ai(
     platform: String,
     shell: String,
     preferred_tool: String,
+    language: String,
 ) -> Result<CommandSuggestion, String> {
 
     println!("[CommandDeck] Intent recibido: {}", intent);
@@ -87,12 +88,10 @@ async fn generate_command_with_ai(
             })?;
 
     let client = reqwest::Client::new();
-
     let system_prompt = r#"
 Eres el motor de generación de comandos de CommandDeck.
 
-Tu trabajo es convertir instrucciones escritas en español
-en comandos de terminal precisos.
+Tu trabajo es convertir instrucciones en comandos de terminal precisos.
 
 CommandDeck está orientado inicialmente a:
 
@@ -133,13 +132,16 @@ La estructura debe ser exactamente:
 }
 "#;
 
+    let language_name = if language == "es" { "Spanish" } else { "English" };
+
     let prompt = format!(
-        "{}\n\nContexto:\nSistema Operativo: {}\nShell: {}\nHerramienta preferida: {}\n\nPetición del usuario:\n{}",
+        "{}\n\nContexto:\nSistema Operativo: {}\nShell: {}\nHerramienta preferida: {}\n\nPetición del usuario:\n{}\n\nIMPORTANT LANGUAGE RULE:\nThe `summary` and every string inside `explanation` MUST be written exclusively in the requested response language.\nRequested language: {}\nThe `command` itself must NEVER be translated.",
         system_prompt,
         platform,
         shell,
         preferred_tool,
-        intent
+        intent,
+        language_name
     );
 
     let body = json!({

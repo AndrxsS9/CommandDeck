@@ -11,7 +11,7 @@ export interface HistoryEntry {
 }
 
 const HISTORY_KEY = 'commanddeck_history';
-const MAX_HISTORY = 20;
+const MAX_HISTORY = 1000;
 
 export function getHistory(): HistoryEntry[] {
   try {

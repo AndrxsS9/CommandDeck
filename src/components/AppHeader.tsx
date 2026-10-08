@@ -1,4 +1,5 @@
 import { ThemeToggle } from './ThemeToggle';
+import { useI18n } from '../i18n/LanguageContext';
 
 interface AppHeaderProps {
   theme: 'dark' | 'light';
@@ -6,6 +7,8 @@ interface AppHeaderProps {
 }
 
 export function AppHeader({ theme, onToggleTheme }: AppHeaderProps) {
+  const { language, setLanguage, t } = useI18n();
+
   return (
     <header className="app-header">
       {/* Brand */}
@@ -24,18 +27,24 @@ export function AppHeader({ theme, onToggleTheme }: AppHeaderProps) {
       <div className="app-header__search">
         <div className="app-header__search-wrapper" style={{ background: 'transparent', border: 'none' }}>
           <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>
-            Alt + Space para abrir · Ctrl + Alt + Space si no está disponible
+            {t.header.hotkeyHint}
           </span>
         </div>
       </div>
 
       {/* Actions */}
       <div className="app-header__actions">
+        <button
+          id="language-toggle"
+          className="lang-toggle"
+          onClick={() => setLanguage(language === 'es' ? 'en' : 'es')}
+          aria-label={t.header.languageAria}
+          title={t.header.languageAria}
+        >
+          <span className={language === 'es' ? 'lang-toggle__opt lang-toggle__opt--active' : 'lang-toggle__opt'}>ES</span>
+          <span className={language === 'en' ? 'lang-toggle__opt lang-toggle__opt--active' : 'lang-toggle__opt'}>EN</span>
+        </button>
         <ThemeToggle theme={theme} onToggle={onToggleTheme} />
-        <div className="app-header__status">
-          <span className="status-dot" />
-          <span className="app-header__status-text">CommandDeck listo</span>
-        </div>
       </div>
     </header>
   );

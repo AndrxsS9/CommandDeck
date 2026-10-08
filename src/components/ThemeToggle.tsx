@@ -1,14 +1,19 @@
+import { useI18n } from '../i18n/LanguageContext';
+
 interface ThemeToggleProps {
   theme: 'dark' | 'light';
   onToggle: () => void;
 }
 
 export function ThemeToggle({ theme, onToggle }: ThemeToggleProps) {
+  const { t } = useI18n();
+
   return (
     <button
+      id="theme-toggle"
       className="theme-toggle"
       onClick={onToggle}
-      aria-label={`Cambiar a modo ${theme === 'dark' ? 'claro' : 'oscuro'}`}
+      aria-label={theme === 'dark' ? t.header.themeToLightAria : t.header.themeToDarkAria}
     >
       {theme === 'dark' ? (
         <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -27,7 +32,7 @@ export function ThemeToggle({ theme, onToggle }: ThemeToggleProps) {
           <line x1="17.66" y1="6.34" x2="19.07" y2="4.93" />
         </svg>
       )}
-      <span>{theme === 'dark' ? 'Modo Oscuro' : 'Modo Claro'}</span>
+      <span>{theme === 'dark' ? t.header.themeDark : t.header.themeLight}</span>
     </button>
   );
 }
