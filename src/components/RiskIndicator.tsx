@@ -1,19 +1,6 @@
 import type { RiskLevel } from '../types/command';
 import type { ReactNode } from 'react';
-
-const riskLabels: Record<RiskLevel, string> = {
-  read: 'Lectura',
-  low: 'Bajo',
-  medium: 'Medio',
-  critical: 'Crítico',
-};
-
-const riskMessages: Record<RiskLevel, string> = {
-  read: 'Sin patrones destructivos detectados',
-  low: 'Riesgo bajo según análisis local',
-  medium: 'Requiere revisión antes de continuar',
-  critical: 'Acción crítica',
-};
+import { useI18n } from '../i18n/LanguageContext';
 
 const riskIcons: Record<RiskLevel, ReactNode> = {
   read: (
@@ -48,21 +35,25 @@ interface RiskIndicatorProps {
 }
 
 export function RiskIndicator({ level, reasons }: RiskIndicatorProps) {
+  const { t } = useI18n();
   const riskClass = level === 'read' || level === 'low' ? 'read' : level;
+  const firstReason = reasons.length > 0
+    ? (t.risk.reasons[reasons[0]] ?? reasons[0])
+    : null;
 
   return (
     <div className={`risk-panel risk-panel--${riskClass}`}>
       <div>
         <div className="risk-panel__header">
-          <span className="risk-panel__title">Nivel de Riesgo</span>
+          <span className="risk-panel__title">{t.risk.title}</span>
           <span className="risk-panel__badge">
             {riskIcons[level]}
-            {riskLabels[level]}
+            {t.risk.labels[level]}
           </span>
         </div>
-        {reasons.length > 0 && (
+        {firstReason && (
           <p className="risk-panel__description">
-            {reasons[0]}
+            {firstReason}
           </p>
         )}
       </div>
@@ -70,7 +61,7 @@ export function RiskIndicator({ level, reasons }: RiskIndicatorProps) {
         <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
         </svg>
-        <span>{riskMessages[level]}</span>
+        <span>{t.risk.messages[level]}</span>
       </div>
     </div>
   );

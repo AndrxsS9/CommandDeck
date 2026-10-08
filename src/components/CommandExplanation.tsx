@@ -1,8 +1,12 @@
+import { useI18n } from '../i18n/LanguageContext';
+
 interface CommandExplanationProps {
   explanation: string[];
 }
 
 export function CommandExplanation({ explanation }: CommandExplanationProps) {
+  const { t } = useI18n();
+
   if (explanation.length === 0) return null;
 
   /**
@@ -37,7 +41,7 @@ export function CommandExplanation({ explanation }: CommandExplanationProps) {
           <line x1="3" y1="12" x2="3.01" y2="12" />
           <line x1="3" y1="18" x2="3.01" y2="18" />
         </svg>
-        <span>Desglose de Parámetros</span>
+        <span>{t.result.paramsBreakdown}</span>
       </div>
       <div className="params-breakdown__list">
         {explanation.map((item, i) => {
