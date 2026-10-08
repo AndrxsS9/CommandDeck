@@ -32,10 +32,6 @@ export function AppHeader({ theme, onToggleTheme }: AppHeaderProps) {
       {/* Actions */}
       <div className="app-header__actions">
         <ThemeToggle theme={theme} onToggle={onToggleTheme} />
-        <div className="app-header__status">
-          <span className="status-dot" />
-          <span className="app-header__status-text">CommandDeck listo</span>
-        </div>
       </div>
     </header>
   );

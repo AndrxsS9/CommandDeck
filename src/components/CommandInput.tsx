@@ -54,10 +54,6 @@ export const CommandInput = forwardRef<CommandInputHandle, CommandInputProps>(
             </div>
             <h2 className="command-input-card__title">Traductor en Lenguaje Natural</h2>
           </div>
-          <span className="command-input-card__model-badge">
-            <span className="command-input-card__model-dot" />
-            Asistente disponible
-          </span>
         </div>
 
         {/* Textarea */}
