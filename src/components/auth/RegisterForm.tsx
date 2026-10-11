@@ -86,7 +86,7 @@ export function RegisterForm({ onSwitchToLogin, onNeedsEmailConfirmation }: Regi
         label={t.auth.name}
         placeholder={t.auth.namePlaceholder}
         autoComplete="name"
-        maxLength={NAME_MAX_LENGTH + 20 /* margen para espacios que se normalizan */}
+        maxLength={NAME_MAX_LENGTH}
         value={name}
         onValueChange={(v) => { setName(v); clear('name'); }}
         error={tr(errors.name)}
