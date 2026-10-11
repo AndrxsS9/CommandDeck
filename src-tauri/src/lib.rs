@@ -79,8 +79,6 @@ async fn generate_command_with_ai(
     language: String,
 ) -> Result<CommandSuggestion, String> {
 
-    println!("[CommandDeck] Intent recibido: {}", intent);
-
     let api_key =
         std::env::var("GEMINI_API_KEY")
             .map_err(|_| {
@@ -163,9 +161,8 @@ La estructura debe ser exactamente:
     });
 
     let url = format!(
-        "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent?key={}",
-        GEMINI_MODEL,
-        api_key
+        "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent",
+        GEMINI_MODEL
     );
 
     let max_retries = 4;
@@ -173,7 +170,13 @@ La estructura debe ser exactamente:
     let mut wait_secs = 1;
 
     let json_response: serde_json::Value = loop {
-        match client.post(&url).json(&body).send().await {
+        match client
+            .post(&url)
+            .header("x-goog-api-key", &api_key)
+            .json(&body)
+            .send()
+            .await
+        {
             Ok(response) => {
                 let status = response.status();
 
@@ -247,8 +250,6 @@ La estructura debe ser exactamente:
                     output_text
                 )
             })?;
-
-    println!("[CommandDeck] Comando generado: {}", result.command);
 
     Ok(result)
 }
