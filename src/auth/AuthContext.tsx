@@ -13,7 +13,6 @@ interface AuthContextValue {
   signIn: typeof authService.signIn;
   signUp: typeof authService.signUp;
   signOut: typeof authService.signOut;
-  resetPassword: typeof authService.resetPassword;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -60,7 +59,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signIn: authService.signIn,
     signUp: authService.signUp,
     signOut: authService.signOut,
-    resetPassword: authService.resetPassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

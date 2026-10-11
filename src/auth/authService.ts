@@ -123,11 +123,3 @@ export function signOut(): Promise<void> {
     }
   });
 }
-
-export function resetPassword(email: string): Promise<void> {
-  return run('resetPassword', async () => {
-    // Sin redirectTo: Supabase usa el "Site URL" configurado en el proyecto.
-    const { error } = await requireClient().auth.resetPasswordForEmail(email);
-    if (error) throw error;
-  });
-}

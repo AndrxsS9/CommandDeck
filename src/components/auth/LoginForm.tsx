@@ -9,12 +9,11 @@ interface LoginFormProps {
   /** Mensaje de éxito previo (p. ej. tras crear la cuenta). */
   notice?: string | null;
   onSwitchToRegister: () => void;
-  onSwitchToForgotPassword: () => void;
 }
 
 type LoginErrors = { email?: AuthErrorKey | null; password?: AuthErrorKey | null };
 
-export function LoginForm({ notice, onSwitchToRegister, onSwitchToForgotPassword }: LoginFormProps) {
+export function LoginForm({ notice, onSwitchToRegister }: LoginFormProps) {
   const { t } = useI18n();
   const { signIn } = useAuth();
 
@@ -85,18 +84,6 @@ export function LoginForm({ notice, onSwitchToRegister, onSwitchToForgotPassword
         error={tr(errors.password)}
         disabled={submitting}
       />
-
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-8px' }}>
-        <button
-          id="go-to-forgot-password"
-          type="button"
-          className="auth-link"
-          style={{ fontSize: '12px' }}
-          onClick={onSwitchToForgotPassword}
-        >
-          {t.auth.forgotPasswordLink}
-        </button>
-      </div>
 
       <button id="login-submit" type="submit" className="auth-submit" disabled={submitting}>
         {submitting && <span className="auth-submit__spinner" aria-hidden="true" />}
