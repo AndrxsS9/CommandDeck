@@ -1751,3 +1751,79 @@ button:disabled {
     padding: 20px;
   }
 }
+
+/* Estado de carga / configuración de Auth */
+.auth-page--status {
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.auth-status__text {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.auth-config__vars {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--color-bg-terminal);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  color: var(--color-brand-text);
+  white-space: pre;
+  line-height: 1.6;
+}
+
+/* Header: usuario y cerrar sesión */
+.app-header__user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+  padding-left: 10px;
+  border-left: 1px solid var(--color-border-subtle);
+}
+
+.app-header__user-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-header__user-signout {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-primary);
+  background: var(--color-bg-deep);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.app-header__user-signout:hover:not(:disabled) {
+  background: var(--color-brand-950);
+  border-color: var(--color-brand-800);
+  color: var(--color-brand-text);
+}
+
+.app-header__user-signout:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+}

@@ -116,7 +116,11 @@ export function signUp(fullName: string, email: string, password: string): Promi
 export function signOut(): Promise<void> {
   return run('signOut', async () => {
     const { error } = await requireClient().auth.signOut();
-    if (error) throw error;
+    // supabase-js elimina la sesión local incluso si falla la revocación remota
+    // (p. ej. sin conexión), así que el usuario vuelve al Login igualmente.
+    if (error) {
+      console.error('[CommandDeck] Auth (signOut) revocación remota falló:', error.code, error.status);
+    }
   });
 }
 

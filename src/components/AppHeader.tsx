@@ -1,5 +1,8 @@
+import { useState } from 'react';
 import { ThemeToggle } from './ThemeToggle';
 import { useI18n } from '../i18n/LanguageContext';
+import { useAuth } from '../auth/AuthContext';
+import { mapAuthError } from '../auth/authService';
 
 interface AppHeaderProps {
   theme: 'dark' | 'light';
@@ -8,6 +11,23 @@ interface AppHeaderProps {
 
 export function AppHeader({ theme, onToggleTheme }: AppHeaderProps) {
   const { language, setLanguage, t } = useI18n();
+  const { user, signOut } = useAuth();
+  const [signingOut, setSigningOut] = useState(false);
+
+  const fullName = user?.user_metadata?.full_name;
+  const displayName = (typeof fullName === 'string' && fullName.trim()) || user?.email || '';
+
+  async function handleSignOut() {
+    if (signingOut) return;
+    setSigningOut(true);
+    try {
+      // Al cerrar sesión, AuthProvider vuelve automáticamente al Login.
+      await signOut();
+    } catch (error) {
+      window.alert(t.auth.errors[mapAuthError(error)]);
+      setSigningOut(false);
+    }
+  }
 
   return (
     <header className="app-header">
@@ -45,6 +65,17 @@ export function AppHeader({ theme, onToggleTheme }: AppHeaderProps) {
           <span className={language === 'en' ? 'lang-toggle__opt lang-toggle__opt--active' : 'lang-toggle__opt'}>EN</span>
         </button>
         <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+        <div className="app-header__user">
+          <span className="app-header__user-name" title={displayName}>{displayName}</span>
+          <button
+            id="sign-out"
+            className="app-header__user-signout"
+            onClick={handleSignOut}
+            disabled={signingOut}
+          >
+            {signingOut ? t.auth.signingOut : t.auth.signOut}
+          </button>
+        </div>
       </div>
     </header>
   );

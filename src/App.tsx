@@ -13,25 +13,18 @@ import { LoadingState } from './components/LoadingState';
 import { ErrorState } from './components/ErrorState';
 import { useI18n } from './i18n/LanguageContext';
 import { ToolIcon } from './components/ToolIcon';
+import type { Theme } from './hooks/useTheme';
 
-type Theme = 'dark' | 'light';
-
-const THEME_KEY = 'commanddeck_theme';
-
-/** Modo claro por defecto; respeta la preferencia guardada si existe. */
-function getInitialTheme(): Theme {
-  try {
-    const saved = localStorage.getItem(THEME_KEY);
-    if (saved === 'dark' || saved === 'light') return saved;
-  } catch {
-    // localStorage no disponible: usar valor por defecto
-  }
-  return 'light';
+interface AppProps {
+  /** Id del usuario autenticado (Supabase). */
+  userId: string;
+  theme: Theme;
+  onToggleTheme: () => void;
 }
 
-function App() {
+/** Workspace principal de CommandDeck. Solo se monta con sesión válida (ver AuthGate). */
+function App({ userId, theme, onToggleTheme }: AppProps) {
   const { t, language } = useI18n();
-  const [theme, setTheme] = useState<Theme>(getInitialTheme);
 
   const [intent, setIntent] = useState('');
   const [result, setResult] = useState<(CommandResult & { platformContext: PlatformContext }) | null>(null);
@@ -41,15 +34,6 @@ function App() {
   const [copied, setCopied] = useState(false);
 
   const commandInputRef = useRef<CommandInputHandle>(null);
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    try {
-      localStorage.setItem(THEME_KEY, theme);
-    } catch {
-      // Si no se puede persistir, el tema sigue funcionando en la sesión actual
-    }
-  }, [theme]);
 
   // Escuchar evento de foco desde el HotKey de Tauri
   useEffect(() => {
@@ -113,7 +97,7 @@ function App() {
     <div className="app-layout">
       <AppHeader 
         theme={theme} 
-        onToggleTheme={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')} 
+        onToggleTheme={onToggleTheme} 
       />
 
       <div className="app-body">
