@@ -18,7 +18,7 @@ export function AuthLoadingScreen() {
   );
 }
 
-/** Se muestra si faltan VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY. */
+/** Se muestra si faltan VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY. */
 export function AuthConfigErrorScreen() {
   const { t } = useI18n();
 
@@ -33,7 +33,7 @@ export function AuthConfigErrorScreen() {
               <p className="auth-card__subtitle">{t.auth.configText}</p>
             </div>
             <code className="auth-config__vars">
-              VITE_SUPABASE_URL{'\n'}VITE_SUPABASE_ANON_KEY
+              VITE_SUPABASE_URL{'\n'}VITE_SUPABASE_PUBLISHABLE_KEY
             </code>
           </div>
         </div>
