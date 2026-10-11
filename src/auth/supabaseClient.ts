@@ -28,7 +28,7 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
         // Supabase gestiona y persiste la sesión (localStorage del webview).
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: true,
+        detectSessionInUrl: false,
       },
     })
   : null;
