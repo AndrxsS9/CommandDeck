@@ -52,8 +52,8 @@ Si ninguno puede registrarse, se imprime un error en la consola de Rust. La app 
 
 ## Seguridad
 
-- La CSP (`Content-Security-Policy`) está deshabilitada (`null`) durante desarrollo. **Debe configurarse con políticas estrictas antes de cualquier release de producción.**
-- `GEMINI_API_KEY` se mantiene exclusivamente como variable de entorno del sistema. No se almacena en frontend, archivos de configuración ni logs.
+- CommandDeck utiliza una CSP (`Content-Security-Policy`) de producción restrictiva y una `devCsp` específica para desarrollo que permite únicamente Vite local y el endpoint seguro de Supabase Auth.
+- `GEMINI_API_KEY` se mantiene exclusivamente como variable de entorno del sistema. No se almacena en el frontend ni en archivos versionados, no se incluye en la URL y se envía a la API de Gemini mediante el header HTTP `x-goog-api-key`.
 
 ## Notas sobre detección de plataforma
 

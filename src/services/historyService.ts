@@ -10,12 +10,22 @@ export interface HistoryEntry {
   timestamp: number;
 }
 
-const HISTORY_KEY = 'commanddeck_history';
+const GLOBAL_HISTORY_KEY = 'commanddeck_history';
+const USER_HISTORY_PREFIX = 'commanddeck_history_';
 const MAX_HISTORY = 1000;
 
-export function getHistory(): HistoryEntry[] {
+/** Obtiene la clave en localStorage según el userId */
+export function getHistoryKey(userId?: string): string {
+  if (userId && userId.trim()) {
+    return `${USER_HISTORY_PREFIX}${userId.trim()}`;
+  }
+  return GLOBAL_HISTORY_KEY;
+}
+
+export function getHistory(userId?: string): HistoryEntry[] {
   try {
-    const raw = localStorage.getItem(HISTORY_KEY);
+    const key = getHistoryKey(userId);
+    const raw = localStorage.getItem(key);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
@@ -36,9 +46,13 @@ export function getHistory(): HistoryEntry[] {
   return [];
 }
 
-export function addHistoryEntry(entry: Omit<HistoryEntry, 'id' | 'timestamp'>): void {
+export function addHistoryEntry(
+  entry: Omit<HistoryEntry, 'id' | 'timestamp'>,
+  userId?: string
+): void {
   try {
-    const current = getHistory();
+    const key = getHistoryKey(userId);
+    const current = getHistory(userId);
     
     // Evitar duplicados consecutivos basados en intent
     if (current.length > 0 && current[0].intent === entry.intent) {
@@ -52,18 +66,20 @@ export function addHistoryEntry(entry: Omit<HistoryEntry, 'id' | 'timestamp'>): 
     };
 
     const updated = [newEntry, ...current].slice(0, MAX_HISTORY);
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+    localStorage.setItem(key, JSON.stringify(updated));
     
-    window.dispatchEvent(new Event('history_updated'));
+    // Despachar evento con detalle del userId para oyentes específicos
+    window.dispatchEvent(new CustomEvent('history_updated', { detail: { userId } }));
   } catch (e) {
     console.warn('[CommandDeck] No se pudo guardar en el historial:', e);
   }
 }
 
-export function clearHistory(): void {
+export function clearHistory(userId?: string): void {
   try {
-    localStorage.removeItem(HISTORY_KEY);
-    window.dispatchEvent(new Event('history_updated'));
+    const key = getHistoryKey(userId);
+    localStorage.removeItem(key);
+    window.dispatchEvent(new CustomEvent('history_updated', { detail: { userId } }));
   } catch (e) {
     console.warn('[CommandDeck] No se pudo limpiar el historial:', e);
   }
