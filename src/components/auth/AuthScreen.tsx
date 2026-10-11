@@ -3,9 +3,10 @@ import { useI18n } from '../../i18n/LanguageContext';
 import { ThemeToggle } from '../ThemeToggle';
 import { LoginForm } from './LoginForm';
 import { RegisterForm } from './RegisterForm';
+import { ForgotPasswordForm } from './ForgotPasswordForm';
 
 type Theme = 'dark' | 'light';
-type AuthView = 'login' | 'register';
+type AuthView = 'login' | 'register' | 'forgot_password';
 
 interface AuthScreenProps {
   theme: Theme;
@@ -80,6 +81,7 @@ export function AuthScreen({ theme, onToggleTheme }: AuthScreenProps) {
         <LoginForm
           notice={showConfirmNotice ? t.auth.accountCreatedConfirm : null}
           onSwitchToRegister={() => goTo('register')}
+          onSwitchToForgotPassword={() => goTo('forgot_password')}
         />
       )}
       {view === 'register' && (
@@ -91,6 +93,12 @@ export function AuthScreen({ theme, onToggleTheme }: AuthScreenProps) {
           }}
         />
       )}
+      {view === 'forgot_password' && (
+        <ForgotPasswordForm
+          onBackToLogin={() => goTo('login')}
+        />
+      )}
     </AuthLayout>
   );
 }
+
