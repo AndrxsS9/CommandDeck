@@ -64,7 +64,7 @@ function App({ userId, theme, onToggleTheme }: AppProps) {
     
     try {
       // La herramienta se infiere siempre automáticamente desde la intención
-      const commandResult = await generateCommand(intent, 'all', language);
+      const commandResult = await generateCommand(intent, 'all', language, userId);
       setResult(commandResult);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
@@ -162,7 +162,7 @@ function App({ userId, theme, onToggleTheme }: AppProps) {
           </div>
         </main>
 
-        <RecentCommands onReuse={setIntent} />
+        <RecentCommands onReuse={setIntent} userId={userId} />
       </div>
     </div>
   );

@@ -5,6 +5,7 @@ import { ToolIcon, type ToolIconName } from './ToolIcon';
 
 interface RecentCommandsProps {
   onReuse: (intent: string) => void;
+  userId?: string;
 }
 
 function formatRecentDate(ts: number, t: any) {
@@ -19,20 +20,25 @@ function formatRecentDate(ts: number, t: any) {
   return date.toLocaleDateString(locale, { month: 'short', day: 'numeric' });
 }
 
-export function RecentCommands({ onReuse }: RecentCommandsProps) {
+export function RecentCommands({ onReuse, userId }: RecentCommandsProps) {
   const { t } = useI18n();
   const [history, setHistory] = useState<HistoryEntry[]>([]);
 
   useEffect(() => {
-    setHistory(getHistory());
+    setHistory(getHistory(userId));
 
-    const onUpdate = () => {
-      setHistory(getHistory());
+    const onUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent<{ userId?: string }>;
+      // Si el evento especifica un userId y no coincide con el nuestro, ignorar
+      if (customEvent.detail && customEvent.detail.userId !== undefined && customEvent.detail.userId !== userId) {
+        return;
+      }
+      setHistory(getHistory(userId));
     };
 
     window.addEventListener('history_updated', onUpdate);
     return () => window.removeEventListener('history_updated', onUpdate);
-  }, []);
+  }, [userId]);
 
   return (
     <aside className="recent-panel">
@@ -48,7 +54,7 @@ export function RecentCommands({ onReuse }: RecentCommandsProps) {
               id="clear-history"
               onClick={() => {
                 if (window.confirm(t.recent.clearConfirm)) {
-                  clearHistory();
+                  clearHistory(userId);
                 }
               }}
               style={{

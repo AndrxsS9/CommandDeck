@@ -47,7 +47,8 @@ function getHighestRisk(
 export async function generateCommand(
   intent: string,
   preferredTool: CommandTool | 'all',
-  language: Language
+  language: Language,
+  userId?: string
 ): Promise<CommandResult & { platformContext: PlatformContext }> {
 
   const platformContext = await getPlatformContext();
@@ -105,7 +106,7 @@ export async function generateCommand(
     tool: finalResult.tool,
     desc: finalResult.summary,
     risk: finalResult.risk,
-  });
+  }, userId);
 
   return finalResult;
 }
