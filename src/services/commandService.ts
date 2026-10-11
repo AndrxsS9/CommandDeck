@@ -9,7 +9,7 @@ import { generateLLMSuggestion, getPlatformContext } from './llmCommandService';
 
 import { assessRisk } from '../utils/riskEngine';
 import { addHistoryEntry } from './historyService';
-import type { Language } from '../i18n/translations';
+import { translations, type Language } from '../i18n/translations';
 
 /**
  * Jerarquía de riesgo.
@@ -70,7 +70,9 @@ export async function generateCommand(
   let finalReasons = [...localAssessment.reasons];
 
   if (riskPriority[suggestion.suggestedRisk] > riskPriority[localAssessment.level]) {
-    finalReasons.unshift(`La IA sugirió un nivel de riesgo superior (${suggestion.suggestedRisk}) al detectado por el análisis local.`);
+    const activeTranslations = translations[language];
+    const translatedRiskLevel = activeTranslations.risk.labels[suggestion.suggestedRisk];
+    finalReasons.unshift(activeTranslations.risk.aiHigher(translatedRiskLevel));
   }
 
   if (finalRisk === 'medium' || finalRisk === 'critical') {
