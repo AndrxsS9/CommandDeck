@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use tauri::{Manager, Emitter};
+use tauri::{Emitter, Manager};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
@@ -50,7 +50,7 @@ const GEMINI_MODEL: &str = "gemini-3.5-flash-lite";
 #[tauri::command]
 fn get_platform_context() -> PlatformContext {
     let os = std::env::consts::OS;
-    
+
     let shell = if os == "windows" {
         // Heurística: si PSModulePath existe, PowerShell está disponible
         if std::env::var("PSModulePath").is_ok() {
@@ -63,7 +63,7 @@ fn get_platform_context() -> PlatformContext {
     } else {
         "bash".to_string()
     };
-    
+
     PlatformContext {
         os: os.to_string(),
         shell,
@@ -78,7 +78,6 @@ async fn generate_command_with_ai(
     preferred_tool: String,
     language: String,
 ) -> Result<CommandSuggestion, String> {
-
     let api_key =
         std::env::var("GEMINI_API_KEY")
             .map_err(|_| {
@@ -130,7 +129,11 @@ La estructura debe ser exactamente:
 }
 "#;
 
-    let language_name = if language == "es" { "Spanish" } else { "English" };
+    let language_name = if language == "es" {
+        "Spanish"
+    } else {
+        "English"
+    };
 
     let prompt = format!(
         "{}\n\nContexto:\nSistema Operativo: {}\nShell: {}\nHerramienta preferida: {}\n\nPetición del usuario:\n{}\n\nIMPORTANT LANGUAGE RULE:\nThe `summary` and every string inside `explanation` MUST be written exclusively in the requested response language.\nRequested language: {}\nThe `command` itself must NEVER be translated.",
@@ -191,7 +194,10 @@ La estructura debe ser exactamente:
 
                     if is_transient {
                         if attempt < max_retries {
-                            eprintln!("[CommandDeck] Gemini HTTP {}. Reintentando en {}s...", status, wait_secs);
+                            eprintln!(
+                                "[CommandDeck] Gemini HTTP {}. Reintentando en {}s...",
+                                status, wait_secs
+                            );
                             tokio::time::sleep(std::time::Duration::from_secs(wait_secs)).await;
                             attempt += 1;
                             wait_secs *= 2;
@@ -201,12 +207,14 @@ La estructura debe ser exactamente:
                             break Err("Gemini no está disponible temporalmente. Intenta nuevamente en unos segundos.".to_string());
                         }
                     } else {
-                        let json: serde_json::Value = response.json().await.unwrap_or(serde_json::Value::Null);
+                        let json: serde_json::Value =
+                            response.json().await.unwrap_or(serde_json::Value::Null);
                         let error_message = json["error"]["message"]
                             .as_str()
                             .unwrap_or("Sin detalle de error");
-                        
-                        let err_str = format!("Error de Gemini (HTTP {}): {}", status, error_message);
+
+                        let err_str =
+                            format!("Error de Gemini (HTTP {}): {}", status, error_message);
                         eprintln!("[CommandDeck] {}", err_str);
                         break Err(err_str);
                     }
@@ -214,7 +222,10 @@ La estructura debe ser exactamente:
             }
             Err(e) => {
                 if attempt < max_retries {
-                    eprintln!("[CommandDeck] Error de conexión: {}. Reintentando en {}s...", e, wait_secs);
+                    eprintln!(
+                        "[CommandDeck] Error de conexión: {}. Reintentando en {}s...",
+                        e, wait_secs
+                    );
                     tokio::time::sleep(std::time::Duration::from_secs(wait_secs)).await;
                     attempt += 1;
                     wait_secs *= 2;
@@ -227,39 +238,23 @@ La estructura debe ser exactamente:
         }
     }?;
 
-    let output_text =
-        json_response["candidates"]
-            .get(0)
-            .and_then(|candidate| {
-                candidate["content"]["parts"]
-                    .get(0)
-            })
-            .and_then(|part| {
-                part["text"].as_str()
-            })
-            .ok_or_else(|| {
-                "Gemini no devolvió contenido válido.".to_string()
-            })?;
+    let output_text = json_response["candidates"]
+        .get(0)
+        .and_then(|candidate| candidate["content"]["parts"].get(0))
+        .and_then(|part| part["text"].as_str())
+        .ok_or_else(|| "Gemini no devolvió contenido válido.".to_string())?;
 
-    let result: CommandSuggestion =
-        serde_json::from_str(output_text)
-            .map_err(|e| {
-                format!(
-                    "Gemini respondió, pero el JSON no coincide con CommandDeck: {}\nRespuesta: {}",
-                    e,
-                    output_text
-                )
-            })?;
+    let result: CommandSuggestion = serde_json::from_str(output_text).map_err(|e| {
+        eprintln!("[CommandDeck] Respuesta JSON de Gemini inválida: {}", e);
+
+        "Gemini respondió con un formato no válido. Intenta nuevamente.".to_string()
+    })?;
 
     Ok(result)
 }
 
-#[cfg_attr(
-    mobile,
-    tauri::mobile_entry_point
-)]
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-
     tauri::Builder::default()
         .plugin(
             tauri_plugin_clipboard_manager::init()
