@@ -70,6 +70,26 @@ fn get_platform_context() -> PlatformContext {
     }
 }
 
+fn get_gemini_api_key() -> Result<String, String> {
+    if let Ok(value) = std::env::var("GEMINI_API_KEY") {
+        let value = value.trim();
+
+        if !value.is_empty() {
+            return Ok(value.to_string());
+        }
+    }
+
+    if let Some(value) = option_env!("COMMANDDECK_BUILD_GEMINI_API_KEY") {
+        let value = value.trim();
+
+        if !value.is_empty() {
+            return Ok(value.to_string());
+        }
+    }
+
+    Err("Gemini no está configurado correctamente.".to_string())
+}
+
 #[tauri::command]
 async fn generate_command_with_ai(
     intent: String,
@@ -78,11 +98,7 @@ async fn generate_command_with_ai(
     preferred_tool: String,
     language: String,
 ) -> Result<CommandSuggestion, String> {
-    let api_key =
-        std::env::var("GEMINI_API_KEY")
-            .map_err(|_| {
-                "No se encontró la variable GEMINI_API_KEY. Asegúrate de configurarla como variable de entorno del sistema.".to_string()
-            })?;
+    let api_key = get_gemini_api_key()?;
 
     let client = reqwest::Client::new();
     let system_prompt = r#"

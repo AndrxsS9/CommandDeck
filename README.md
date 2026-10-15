@@ -53,7 +53,11 @@ Si ninguno puede registrarse, se imprime un error en la consola de Rust. La app 
 ## Seguridad
 
 - CommandDeck utiliza una CSP (`Content-Security-Policy`) de producción restrictiva y una `devCsp` específica para desarrollo que permite únicamente Vite local y el endpoint seguro de Supabase Auth.
-- `GEMINI_API_KEY` se mantiene exclusivamente como variable de entorno del sistema. No se almacena en el frontend ni en archivos versionados, no se incluye en la URL y se envía a la API de Gemini mediante el header HTTP `x-goog-api-key`.
+- En entorno de desarrollo, la integración con Gemini se resuelve mediante la variable de entorno runtime `GEMINI_API_KEY`.
+- Para distribuciones académicas / empaquetado del instalador, el binario puede incorporar la clave en tiempo de compilación mediante `COMMANDDECK_BUILD_GEMINI_API_KEY`.
+- Ninguna de las dos claves debe versionarse ni exponerse en archivos del repositorio.
+- Una clave integrada en un binario desktop debe considerarse distribuida y con fines de evaluación académica, no un secreto de producción.
+- Las credenciales nunca se almacenan en el frontend ni en archivos versionados, no se incluyen en la URL ni query strings, y se envían a la API de Gemini exclusivamente mediante el header HTTP `x-goog-api-key` desde el backend de Rust.
 
 ## Notas sobre detección de plataforma
 
