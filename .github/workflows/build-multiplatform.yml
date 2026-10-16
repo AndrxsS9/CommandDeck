@@ -2,9 +2,6 @@ name: Build Multiplatform
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - ci/multiplatform-build
 
 env:
   COMMANDDECK_BUILD_GEMINI_API_KEY: ${{ secrets.COMMANDDECK_BUILD_GEMINI_API_KEY }}
