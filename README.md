@@ -86,8 +86,9 @@ La detección de shell es una **heurística** basada en variables de entorno (`P
 npx vitest run
 ```
 
-## Plataformas probadas
+## Plataformas
 
-- **Windows 10/11**: Probado activamente.
-- **Linux**: Objetivo de compatibilidad (pendiente validación exhaustiva).
-- **macOS**: Soporte básico (sin pruebas nativas realizadas).
+- **Windows x64**: Soportado y validado.
+- **Linux x64**: Build mediante GitHub Actions; validación runtime pendiente.
+- **macOS Apple Silicon (arm64)**: Build mediante GitHub Actions; validación runtime pendiente.
+- **macOS Intel (x64)**: Build mediante GitHub Actions; validación runtime pendiente.

@@ -1,6 +1,6 @@
 [package]
 name = "commanddeck"
-version = "0.1.0"
+version = "0.1.1"
 description = "Intent-to-command desktop assistant"
 authors = ["CommandDeck"]
 edition = "2021"
