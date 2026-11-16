@@ -4,6 +4,8 @@ import {
   addHistoryEntry,
   clearHistory,
   getHistoryKey,
+  getHistoryDescription,
+  type HistoryEntry,
 } from './historyService';
 
 // Mock localStorage and window in node environment
@@ -158,5 +160,94 @@ describe('historyService multi-user isolation', () => {
 
     expect(getHistory(userA)).toHaveLength(0);
     expect(getHistory(userB)).toHaveLength(1);
+  });
+});
+
+describe('historyService — descripción bilingüe', () => {
+  beforeEach(() => {
+    globalThis.localStorage.clear();
+  });
+
+  it('los registros nuevos conservan la descripción en ES y EN', () => {
+    addHistoryEntry(
+      {
+        intent: 'listar ramas',
+        command: 'git branch',
+        tool: 'git',
+        desc: 'Lista las ramas locales.',
+        descByLanguage: { es: 'Lista las ramas locales.', en: 'Lists the local branches.' },
+        risk: 'read',
+      },
+      'user-1'
+    );
+
+    const [entry] = getHistory('user-1');
+    expect(entry.descByLanguage).toEqual({
+      es: 'Lista las ramas locales.',
+      en: 'Lists the local branches.',
+    });
+    expect(getHistoryDescription(entry, 'es')).toBe('Lista las ramas locales.');
+    expect(getHistoryDescription(entry, 'en')).toBe('Lists the local branches.');
+    expect(entry.command).toBe('git branch');
+  });
+
+  it('los registros antiguos con solo desc siguen leyéndose sin errores', () => {
+    globalThis.localStorage.setItem(
+      'commanddeck_history_user-legacy',
+      JSON.stringify([
+        {
+          id: 'legacy-1',
+          intent: 'ver contenedores',
+          command: 'docker ps',
+          tool: 'docker',
+          desc: 'Lista contenedores activos',
+          risk: 'read',
+          timestamp: 1000,
+        },
+      ])
+    );
+
+    const entries = getHistory('user-legacy');
+    expect(entries).toHaveLength(1);
+    expect(entries[0].descByLanguage).toBeUndefined();
+    expect(getHistoryDescription(entries[0], 'es')).toBe('Lista contenedores activos');
+    expect(getHistoryDescription(entries[0], 'en')).toBe('Lista contenedores activos');
+
+    // Agregar un registro nuevo no migra ni borra el antiguo
+    addHistoryEntry(
+      {
+        intent: 'nuevo',
+        command: 'git status',
+        tool: 'git',
+        descByLanguage: { es: 'Estado', en: 'Status' },
+        risk: 'read',
+      },
+      'user-legacy'
+    );
+    const updated = getHistory('user-legacy');
+    expect(updated).toHaveLength(2);
+    expect(updated[1].desc).toBe('Lista contenedores activos');
+  });
+
+  it('tolera descByLanguage incompleto o corrupto recurriendo a desc', () => {
+    const base: HistoryEntry = {
+      id: 'x',
+      intent: 'i',
+      command: 'ls',
+      tool: 'system',
+      desc: 'fallback',
+      risk: 'read',
+      timestamp: 1,
+    };
+
+    const partial = { ...base, descByLanguage: { es: 'Solo español' } } as unknown as HistoryEntry;
+    expect(getHistoryDescription(partial, 'es')).toBe('Solo español');
+    expect(getHistoryDescription(partial, 'en')).toBe('fallback');
+
+    const corrupt = { ...base, descByLanguage: 'texto' } as unknown as HistoryEntry;
+    expect(getHistoryDescription(corrupt, 'en')).toBe('fallback');
+
+    const withoutDesc = { ...base, desc: undefined };
+    expect(getHistoryDescription(withoutDesc, 'es')).toBeUndefined();
   });
 });
