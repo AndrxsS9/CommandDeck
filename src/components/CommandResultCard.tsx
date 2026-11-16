@@ -39,7 +39,9 @@ function getPlatformLabel(t: Translations, ctx?: PlatformContext): string {
 }
 
 export function CommandResultCard({ result, onCopy, onNewQuery, copied }: CommandResultCardProps) {
-  const { t } = useI18n();
+  // El resumen y el desglose llegan en ES y EN desde una única generación:
+  // cambiar de idioma solo vuelve a renderizar, sin regenerar el comando.
+  const { t, language } = useI18n();
 
   return (
     <section className="command-result">
@@ -74,12 +76,12 @@ export function CommandResultCard({ result, onCopy, onNewQuery, copied }: Comman
 
       {/* Summary */}
       <div className="summary-card">
-        {result.summary}
+        {result.summary[language]}
       </div>
 
       {/* Grid: Breakdown + Risk */}
       <div className="result-details-grid">
-        <CommandExplanation explanation={result.explanation} />
+        <CommandExplanation explanation={result.explanation[language]} />
         <RiskIndicator level={result.risk} reasons={result.riskReasons} />
       </div>
 

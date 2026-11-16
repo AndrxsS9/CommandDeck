@@ -85,7 +85,9 @@ export async function generateCommand(
   // Paso 4: Resultado final
   const finalResult = {
     id: crypto.randomUUID(),
-    intent: suggestion.intent,
+    // La intención es siempre la petición original del usuario, nunca la
+    // versión que devuelva Gemini (podría venir traducida o reformulada).
+    intent,
     command: suggestion.command,
     tool: suggestion.tool,
     summary: suggestion.summary,
@@ -107,7 +109,8 @@ export async function generateCommand(
     intent: finalResult.intent,
     command: finalResult.command,
     tool: finalResult.tool,
-    desc: finalResult.summary,
+    desc: finalResult.summary[language],
+    descByLanguage: finalResult.summary,
     risk: finalResult.risk,
   }, userId);
 

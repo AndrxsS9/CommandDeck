@@ -27,4 +27,30 @@ describe('llmCommandService — idioma hacia el backend', () => {
       language,
     });
   });
+
+  it('devuelve summary y explanation bilingües tal como llegan del backend', async () => {
+    const backendResponse = {
+      intent: 'listar pods',
+      command: 'kubectl get pods',
+      tool: 'kubernetes',
+      summary: {
+        es: 'Lista todos los pods del namespace actual de Kubernetes.',
+        en: 'Lists all pods in the current Kubernetes namespace.',
+      },
+      explanation: {
+        es: ['kubectl → Herramienta de línea de comandos de Kubernetes.'],
+        en: ['kubectl → The Kubernetes command-line tool.'],
+      },
+      suggestedRisk: 'read',
+    };
+    tauriMocks.invoke.mockResolvedValue(backendResponse);
+
+    const result = await generateLLMSuggestion('listar pods', { os: 'linux', shell: 'bash' }, 'kubernetes', 'en');
+
+    expect(result.summary.es).toBe(backendResponse.summary.es);
+    expect(result.summary.en).toBe(backendResponse.summary.en);
+    expect(result.explanation.es).toEqual(backendResponse.explanation.es);
+    expect(result.explanation.en).toEqual(backendResponse.explanation.en);
+    expect(result.command).toBe('kubectl get pods');
+  });
 });

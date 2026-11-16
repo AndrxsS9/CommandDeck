@@ -46,14 +46,32 @@ export interface PlatformContext {
 }
 
 /**
+ * Texto de presentación generado en ambos idiomas de la interfaz.
+ * La UI elige `es` o `en` al renderizar, sin volver a llamar a Gemini.
+ */
+export interface LocalizedText {
+  es: string;
+  en: string;
+}
+
+/**
+ * Desglose de parámetros generado en ambos idiomas de la interfaz.
+ * Los tokens reales del comando no se traducen.
+ */
+export interface LocalizedExplanation {
+  es: string[];
+  en: string[];
+}
+
+/**
  * Propuesta generada por el proveedor LLM (Gemini) vía Tauri/Rust.
  */
 export interface CommandSuggestion {
   intent: string;
   command: string;
   tool: CommandTool;
-  summary: string;
-  explanation: string[];
+  summary: LocalizedText;
+  explanation: LocalizedExplanation;
 
   /**
    * Riesgo sugerido por el LLM.
@@ -75,8 +93,8 @@ export interface CommandResult {
   intent: string;
   command: string;
   tool: CommandTool;
-  summary: string;
-  explanation: string[];
+  summary: LocalizedText;
+  explanation: LocalizedExplanation;
 
   /** Riesgo sugerido por IA. */
   aiRisk: RiskLevel;

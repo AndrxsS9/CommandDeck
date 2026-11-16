@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { LanguageProvider } from '../i18n/LanguageContext';
-import { translations, getInitialLanguage } from '../i18n/translations';
+import { translations, getInitialLanguage, LANGUAGE_KEY, type Language } from '../i18n/translations';
 import type { HistoryEntry } from '../services/historyService';
 import { RecentCommands } from './RecentCommands';
 import { HistoryTrigger } from './HistoryTrigger';
@@ -104,5 +104,78 @@ describe('HistoryTrigger (botón del header)', () => {
   it('refleja el estado abierto con aria-expanded', () => {
     expect(renderTrigger(3, false)).toContain('aria-expanded="false"');
     expect(renderTrigger(3, true)).toContain('aria-expanded="true"');
+  });
+});
+
+describe('RecentCommands — descripción según idioma activo', () => {
+  const storage: Record<string, string> = {};
+  const previousStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+
+  function renderIn(language: Language, items: HistoryEntry[]) {
+    Object.defineProperty(globalThis, 'localStorage', {
+      value: {
+        getItem: (key: string) => storage[key] ?? null,
+        setItem: (key: string, value: string) => {
+          storage[key] = value;
+        },
+        removeItem: (key: string) => {
+          delete storage[key];
+        },
+      },
+      writable: true,
+      configurable: true,
+    });
+    storage[LANGUAGE_KEY] = language;
+    return renderDrawer(true, items);
+  }
+
+  afterEach(() => {
+    for (const key in storage) delete storage[key];
+    if (previousStorage) {
+      Object.defineProperty(globalThis, 'localStorage', previousStorage);
+    } else {
+      delete (globalThis as { localStorage?: unknown }).localStorage;
+    }
+  });
+
+  const bilingual: HistoryEntry = {
+    id: 'b1',
+    intent: 'listar ramas locales',
+    command: 'git branch',
+    tool: 'git',
+    desc: 'Lista las ramas locales.',
+    descByLanguage: { es: 'Lista las ramas locales.', en: 'Lists the local branches.' },
+    risk: 'read',
+    timestamp: Date.now(),
+  };
+
+  const legacy: HistoryEntry = {
+    id: 'l1',
+    intent: 'ver contenedores',
+    command: 'docker ps',
+    tool: 'docker',
+    desc: 'Lista contenedores activos',
+    risk: 'read',
+    timestamp: Date.now(),
+  };
+
+  it('registro nuevo: muestra la descripción en español con ES', () => {
+    const html = renderIn('es', [bilingual]);
+    expect(html).toContain('Lista las ramas locales.');
+    expect(html).not.toContain('Lists the local branches.');
+    expect(html).toContain('git branch');
+  });
+
+  it('registro nuevo: muestra la descripción en inglés con EN sin alterar el comando', () => {
+    const html = renderIn('en', [bilingual]);
+    expect(html).toContain('Lists the local branches.');
+    expect(html).not.toContain('Lista las ramas locales.');
+    expect(html).toContain('git branch');
+  });
+
+  it.each(['es', 'en'] as const)('registro antiguo (solo desc) se muestra en %s sin errores', (language) => {
+    const html = renderIn(language, [legacy]);
+    expect(html).toContain('Lista contenedores activos');
+    expect(html).toContain('docker ps');
   });
 });
