@@ -1,6 +1,7 @@
 import type {
   CommandResult,
   RiskLevel,
+  RiskReason,
   CommandTool,
   PlatformContext
 } from '../types/command';
@@ -9,7 +10,7 @@ import { generateLLMSuggestion, getPlatformContext } from './llmCommandService';
 
 import { assessRisk } from '../utils/riskEngine';
 import { addHistoryEntry } from './historyService';
-import { translations, type Language } from '../i18n/translations';
+import type { Language } from '../i18n/translations';
 
 /**
  * Jerarquía de riesgo.
@@ -67,18 +68,18 @@ export async function generateCommand(
     localAssessment.level
   );
 
-  let finalReasons = [...localAssessment.reasons];
+  // Los motivos se guardan como códigos semánticos; la UI los traduce
+  // al idioma activo en el momento de renderizar.
+  let finalReasons: RiskReason[] = localAssessment.reasons.map(
+    (code): RiskReason => ({ code })
+  );
 
   if (riskPriority[suggestion.suggestedRisk] > riskPriority[localAssessment.level]) {
-    const activeTranslations = translations[language];
-    const translatedRiskLevel = activeTranslations.risk.labels[suggestion.suggestedRisk];
-    finalReasons.unshift(activeTranslations.risk.aiHigher(translatedRiskLevel));
+    finalReasons.unshift({ code: 'ai-higher-risk', level: suggestion.suggestedRisk });
   }
 
   if (finalRisk === 'medium' || finalRisk === 'critical') {
-    finalReasons = finalReasons.filter(
-      reason => reason !== 'El comando parece realizar únicamente una consulta o lectura.'
-    );
+    finalReasons = finalReasons.filter(reason => reason.code !== 'read-only');
   }
 
   // Paso 4: Resultado final

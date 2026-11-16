@@ -102,7 +102,6 @@
 
   /* Layout */
   --header-height: 56px;
-  --sidebar-right-width: 288px;
 
   /* Scrollbar */
   --scrollbar-thumb: #334155;
@@ -265,7 +264,7 @@ button:disabled {
 }
 
 /* ------------------------------------------------
-   LAYOUT PRINCIPAL — contenido principal + panel Recientes
+   LAYOUT PRINCIPAL — contenido principal (historial en drawer)
    ------------------------------------------------ */
 .app-layout {
   display: flex;
@@ -457,7 +456,7 @@ button:disabled {
   color: #ffffff;
 }
 
-/* === BODY (main + right panel) === */
+/* === BODY === */
 .app-body {
   flex: 1;
   display: flex;
@@ -1040,59 +1039,262 @@ button:disabled {
   margin-top: 4px;
 }
 
-/* === Panel de recientes (sidebar derecho) === */
-.recent-panel {
-  width: var(--sidebar-right-width);
-  border-left: 1px solid var(--color-border-primary);
-  background: var(--color-bg-sidebar);
-  padding: var(--space-md);
+/* === Historial: botón del header === */
+.history-trigger {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-primary);
+  background: var(--color-bg-deep);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  transition: all var(--transition-fast);
+}
+
+.history-trigger svg {
+  width: 14px;
+  height: 14px;
   flex-shrink: 0;
 }
 
-.recent-panel__header {
+.history-trigger:hover,
+.history-trigger[aria-expanded='true'] {
+  border-color: var(--color-brand-800);
+  background: var(--color-brand-950);
+  color: var(--color-brand-text);
+}
+
+.history-trigger:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
+
+.history-trigger__count {
+  min-width: 18px;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background: var(--color-brand-600);
+  color: #ffffff;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}
+
+/* === Historial: overlay + drawer derecho === */
+:root {
+  --color-overlay: rgba(2, 6, 23, 0.6);
+}
+
+[data-theme='light'] {
+  --color-overlay: rgba(15, 23, 42, 0.35);
+}
+
+.history-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: var(--color-overlay);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--transition-normal), visibility 0s linear 250ms;
+}
+
+.history-overlay--open {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity var(--transition-normal), visibility 0s;
+}
+
+.history-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  width: min(380px, 100vw);
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  background: var(--color-bg-header);
+  border-left: 1px solid var(--color-border-primary);
+  box-shadow: var(--shadow-lg);
+  transform: translateX(100%);
+  visibility: hidden;
+  transition: transform var(--transition-normal), visibility 0s linear 250ms;
+}
+
+.history-drawer--open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform var(--transition-normal), visibility 0s;
+}
+
+.history-drawer__header {
+  display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  padding-bottom: 12px;
+  gap: var(--space-sm);
+  padding: var(--space-md);
   border-bottom: 1px solid var(--color-border-primary);
 }
 
-.recent-panel__title {
+.history-drawer__heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.history-drawer__title {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 12px;
+  gap: var(--space-sm);
+  font-size: 15px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
   color: var(--color-text-heading);
 }
 
-.recent-panel__title svg {
+.history-drawer__title svg {
   width: 16px;
   height: 16px;
-  color: var(--color-text-secondary);
+  color: var(--color-brand-text);
 }
 
-.recent-panel__count {
-  font-size: 10px;
+.history-drawer__count {
+  font-size: 11px;
   font-family: var(--font-mono);
   color: var(--color-text-secondary);
-  background: var(--color-bg-deep);
-  padding: 2px 8px;
-  border-radius: 4px;
-  border: 1px solid var(--color-border-primary);
 }
 
-.recent-panel__list {
+.history-drawer__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-primary);
+  background: var(--color-bg-deep);
+  color: var(--color-text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.history-drawer__close svg {
+  width: 16px;
+  height: 16px;
+}
+
+.history-drawer__close:hover {
+  border-color: var(--color-brand-800);
+  background: var(--color-brand-950);
+  color: var(--color-brand-text);
+}
+
+.history-drawer__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--space-md);
+}
+
+.history-drawer__list {
+  list-style: none;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-top: 12px;
-  overflow-y: auto;
-  flex: 1;
+}
+
+.history-drawer__footer {
+  padding: 12px var(--space-md);
+  border-top: 1px solid var(--color-border-primary);
+}
+
+.history-drawer__clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-primary);
+  background: var(--color-bg-deep);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  transition: all var(--transition-fast);
+}
+
+.history-drawer__clear svg {
+  width: 14px;
+  height: 14px;
+}
+
+.history-drawer__clear:hover {
+  border-color: var(--color-risk-critical-border);
+  background: var(--color-risk-critical-bg);
+  color: var(--color-risk-critical-text);
+}
+
+.history-drawer__close:focus-visible,
+.history-drawer__clear:focus-visible,
+.recent-item__reuse:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
+
+/* Estado vacío del historial */
+.history-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-xl) var(--space-sm) var(--space-md);
+  text-align: center;
+}
+
+.history-empty__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background: var(--color-brand-950);
+  border: 1px solid var(--color-brand-800);
+  color: var(--color-brand-text);
+}
+
+.history-empty__icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.history-empty__text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+  max-width: 280px;
+}
+
+.history-empty .tip-card {
+  width: 100%;
+  text-align: left;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .history-overlay,
+  .history-overlay--open,
+  .history-drawer,
+  .history-drawer--open {
+    transition: none;
+  }
 }
 
 .recent-item {
@@ -1108,7 +1310,8 @@ button:disabled {
 .recent-item__header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .recent-item__tool {
@@ -1147,19 +1350,22 @@ button:disabled {
   border: 1px solid var(--color-border-primary);
   padding: 4px 8px;
   border-radius: 4px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .recent-item__desc {
   font-size: 11px;
+  line-height: 1.5;
   color: var(--color-text-secondary);
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
-/* Tip card (pie del panel recientes) */
+/* Tip card (estado vacío del historial) */
 .tip-card {
-  margin-top: var(--space-md);
   padding: 12px;
   border-radius: var(--radius-md);
   background: var(--color-brand-950);
@@ -1253,19 +1459,15 @@ button:disabled {
 }
 
 /* === Responsive para ventanas más pequeñas === */
-/* Sin sidebar izquierdo, Recientes se mantiene visible en la ventana por defecto (820px) */
+/* El historial vive en un drawer (ver .history-drawer), disponible en cualquier ancho */
 @media (max-width: 1100px) {
-  .recent-panel {
-    width: 248px;
-  }
-
   .main-content {
     padding: var(--space-lg);
   }
 }
 
 @media (max-width: 720px) {
-  .recent-panel {
+  .history-trigger__label {
     display: none;
   }
 }
