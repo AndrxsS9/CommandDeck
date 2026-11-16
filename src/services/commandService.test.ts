@@ -7,8 +7,10 @@ const llmMocks = vi.hoisted(() => ({
   getPlatformContext: vi.fn(),
 }));
 
+const historyMocks = vi.hoisted(() => ({ addHistoryEntry: vi.fn() }));
+
 vi.mock('./llmCommandService', () => llmMocks);
-vi.mock('./historyService', () => ({ addHistoryEntry: vi.fn() }));
+vi.mock('./historyService', () => historyMocks);
 
 import { generateCommand } from './commandService';
 
@@ -17,8 +19,14 @@ function suggestion(command: string, suggestedRisk: RiskLevel): CommandSuggestio
     intent: 'intención original',
     command,
     tool: 'system',
-    summary: 'summary',
-    explanation: ['part: description'],
+    summary: {
+      es: 'Resumen en español.',
+      en: 'Summary in English.',
+    },
+    explanation: {
+      es: ['part → descripción'],
+      en: ['part → description'],
+    },
     suggestedRisk,
   };
 }
@@ -26,6 +34,7 @@ function suggestion(command: string, suggestedRisk: RiskLevel): CommandSuggestio
 beforeEach(() => {
   llmMocks.generateLLMSuggestion.mockReset();
   llmMocks.getPlatformContext.mockReset();
+  historyMocks.addHistoryEntry.mockReset();
   llmMocks.getPlatformContext.mockResolvedValue({ os: 'linux', shell: 'bash' });
 });
 
@@ -78,7 +87,9 @@ describe('commandService — motivos de riesgo semánticos', () => {
     const en = await generateCommand('historial', 'all', 'en');
     expect(es.command).toBe(command);
     expect(en.command).toBe(command);
-    expect(es.intent).toBe('intención original');
+    // La intención es la petición original, no la devuelta por Gemini
+    expect(es.intent).toBe('historial');
+    expect(en.intent).toBe('historial');
   });
 
   it('el motivo aiHigher se presenta en el idioma seleccionado', async () => {
@@ -104,6 +115,57 @@ describe('commandService — idioma hacia Gemini', () => {
       { os: 'linux', shell: 'bash' },
       'all',
       language
+    );
+  });
+});
+
+describe('commandService — textos de presentación bilingües', () => {
+  it('el resultado contiene summary.es y summary.en', async () => {
+    llmMocks.generateLLMSuggestion.mockResolvedValue(suggestion('git branch', 'read'));
+    const result = await generateCommand('listar ramas', 'all', 'es');
+    expect(result.summary).toEqual({ es: 'Resumen en español.', en: 'Summary in English.' });
+  });
+
+  it('el resultado contiene explanation.es y explanation.en como arrays', async () => {
+    llmMocks.generateLLMSuggestion.mockResolvedValue(suggestion('git branch', 'read'));
+    const result = await generateCommand('listar ramas', 'all', 'en');
+    expect(Array.isArray(result.explanation.es)).toBe(true);
+    expect(Array.isArray(result.explanation.en)).toBe(true);
+    expect(result.explanation.es).toEqual(['part → descripción']);
+    expect(result.explanation.en).toEqual(['part → description']);
+  });
+
+  it('los textos bilingües no dependen del idioma activo al generar', async () => {
+    llmMocks.generateLLMSuggestion.mockResolvedValue(suggestion('git branch', 'read'));
+    const es = await generateCommand('listar ramas', 'all', 'es');
+    const en = await generateCommand('listar ramas', 'all', 'en');
+    expect(es.summary).toEqual(en.summary);
+    expect(es.explanation).toEqual(en.explanation);
+    expect(es.command).toBe(en.command);
+  });
+
+  it('no usa una intención traducida por Gemini', async () => {
+    llmMocks.generateLLMSuggestion.mockResolvedValue({
+      ...suggestion('kubectl get pods', 'read'),
+      intent: 'List Kubernetes pods',
+    });
+    const result = await generateCommand('listar pods de kubernetes', 'all', 'en');
+    expect(result.intent).toBe('listar pods de kubernetes');
+  });
+
+  it('el historial nuevo guarda ambas descripciones y la intención original', async () => {
+    llmMocks.generateLLMSuggestion.mockResolvedValue(suggestion('git branch', 'read'));
+    await generateCommand('listar ramas', 'all', 'en', 'user-1');
+    expect(historyMocks.addHistoryEntry).toHaveBeenCalledWith(
+      {
+        intent: 'listar ramas',
+        command: 'git branch',
+        tool: 'system',
+        desc: 'Summary in English.',
+        descByLanguage: { es: 'Resumen en español.', en: 'Summary in English.' },
+        risk: 'read',
+      },
+      'user-1'
     );
   });
 });
