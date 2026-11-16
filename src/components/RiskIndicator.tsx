@@ -1,6 +1,7 @@
-import type { RiskLevel } from '../types/command';
+import type { RiskLevel, RiskReason } from '../types/command';
 import type { ReactNode } from 'react';
 import { useI18n } from '../i18n/LanguageContext';
+import { formatRiskReason } from '../i18n/translations';
 
 const riskIcons: Record<RiskLevel, ReactNode> = {
   read: (
@@ -31,14 +32,14 @@ const riskIcons: Record<RiskLevel, ReactNode> = {
 
 interface RiskIndicatorProps {
   level: RiskLevel;
-  reasons: string[];
+  reasons: RiskReason[];
 }
 
 export function RiskIndicator({ level, reasons }: RiskIndicatorProps) {
   const { t } = useI18n();
   const riskClass = level === 'read' || level === 'low' ? 'read' : level;
   const firstReason = reasons.length > 0
-    ? (t.risk.reasons[reasons[0]] ?? reasons[0])
+    ? formatRiskReason(reasons[0], t)
     : null;
 
   return (

@@ -1,9 +1,11 @@
-import type { RiskLevel } from '../types/command';
+import type { RiskLevel, RiskReasonCode } from '../types/command';
+
+export type { RiskReasonCode };
 
 export interface RiskAssessment {
   level: RiskLevel;
   score: number;
-  reasons: string[];
+  reasons: RiskReasonCode[];
   reversible: boolean;
   destructive: boolean;
   requiresConfirmation: boolean;
@@ -127,7 +129,7 @@ const elevatedPrivilegePatterns = [
 
 export function assessRisk(command: string): RiskAssessment {
   let score = 0;
-  const reasons: string[] = [];
+  const reasons: RiskReasonCode[] = [];
   let destructive = false;
   let reversible = true;
 
@@ -141,27 +143,27 @@ export function assessRisk(command: string): RiskAssessment {
     score += 8;
     destructive = true;
     reversible = false;
-    reasons.push('El comando puede eliminar, sobrescribir o descartar información.');
+    reasons.push('destructive-operation');
   }
 
   if (hasMediumAction) {
     score += 4;
-    reasons.push('El comando modifica el estado de procesos, servicios o repositorios.');
+    reasons.push('state-modification');
   }
 
   if (hasWriteAction) {
     score += 2;
-    reasons.push('El comando realiza modificaciones locales.');
+    reasons.push('local-modification');
   }
 
   if (hasBulkAction) {
     score += 2;
-    reasons.push('La operación puede afectar múltiples elementos.');
+    reasons.push('bulk-operation');
   }
 
   if (hasElevatedPrivileges) {
     score += 4;
-    reasons.push('El comando solicita privilegios elevados del sistema.');
+    reasons.push('elevated-privileges');
   }
 
   let level: RiskLevel = 'read';
@@ -175,7 +177,7 @@ export function assessRisk(command: string): RiskAssessment {
   }
 
   if (score === 0) {
-    reasons.push('El comando parece realizar únicamente una consulta o lectura.');
+    reasons.push('read-only');
   }
 
   return {

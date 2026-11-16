@@ -1,5 +1,29 @@
 export type RiskLevel = 'read' | 'low' | 'medium' | 'critical';
 
+/**
+ * Códigos semánticos y estables que explican el riesgo calculado
+ * por el Risk Engine local. Son independientes del idioma: la capa
+ * de presentación los traduce con el sistema i18n.
+ */
+export type RiskReasonCode =
+  | 'destructive-operation'
+  | 'state-modification'
+  | 'local-modification'
+  | 'bulk-operation'
+  | 'elevated-privileges'
+  | 'read-only';
+
+/**
+ * Motivo de riesgo mostrado en la interfaz.
+ *
+ * - Un código del Risk Engine local.
+ * - O la indicación de que la IA sugirió un riesgo superior
+ *   al calculado localmente (con el nivel sugerido).
+ */
+export type RiskReason =
+  | { code: RiskReasonCode }
+  | { code: 'ai-higher-risk'; level: RiskLevel };
+
 export type CommandTool =
   | 'git'
   | 'docker'
@@ -63,7 +87,7 @@ export interface CommandResult {
   /** Riesgo definitivo mostrado al usuario. */
   risk: RiskLevel;
 
-  riskReasons: string[];
+  riskReasons: RiskReason[];
   reversible: boolean;
   destructive: boolean;
   requiresConfirmation: boolean;

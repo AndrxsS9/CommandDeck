@@ -6,6 +6,7 @@
  */
 
 import { NAME_MAX_LENGTH, NAME_MIN_LENGTH, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '../auth/validation';
+import type { RiskReason, RiskReasonCode } from '../types/command';
 
 export type Language = 'es' | 'en';
 
@@ -86,8 +87,15 @@ const es = {
     /** Motivo añadido cuando la IA sugiere un riesgo mayor que el análisis local. */
     aiHigher: (level: string) =>
       `La IA sugirió un nivel de riesgo superior (${level}) al detectado por el análisis local.`,
-    /** Traducción de los motivos del Risk Engine (que se generan en español). */
-    reasons: {} as Record<string, string>,
+    /** Texto de cada código semántico emitido por el Risk Engine. */
+    reasons: {
+      'destructive-operation': 'El comando puede eliminar, sobrescribir o descartar información.',
+      'state-modification': 'El comando modifica el estado de procesos, servicios o repositorios.',
+      'local-modification': 'El comando realiza modificaciones locales.',
+      'bulk-operation': 'La operación puede afectar múltiples elementos.',
+      'elevated-privileges': 'El comando solicita privilegios elevados del sistema.',
+      'read-only': 'El comando parece realizar únicamente una consulta o lectura.',
+    } satisfies Record<RiskReasonCode, string>,
   },
   tools: {
     git: 'Git',
@@ -242,18 +250,12 @@ const en: Translations = {
     aiHigher: (level: string) =>
       `The AI suggested a higher risk level (${level}) than the one detected by local analysis.`,
     reasons: {
-      'El comando puede eliminar, sobrescribir o descartar información.':
-        'The command may delete, overwrite or discard information.',
-      'El comando modifica el estado de procesos, servicios o repositorios.':
-        'The command changes the state of processes, services or repositories.',
-      'El comando realiza modificaciones locales.':
-        'The command performs local modifications.',
-      'La operación puede afectar múltiples elementos.':
-        'The operation may affect multiple items.',
-      'El comando solicita privilegios elevados del sistema.':
-        'The command requests elevated system privileges.',
-      'El comando parece realizar únicamente una consulta o lectura.':
-        'The command appears to only perform a query or read.',
+      'destructive-operation': 'The command may delete, overwrite, or discard information.',
+      'state-modification': 'The command changes the state of processes, services, or repositories.',
+      'local-modification': 'The command makes local changes.',
+      'bulk-operation': 'The operation may affect multiple items.',
+      'elevated-privileges': 'The command requests elevated system privileges.',
+      'read-only': 'The command appears to only query or read information.',
     },
   },
   tools: {
@@ -334,6 +336,17 @@ const en: Translations = {
 };
 
 export const translations: Record<Language, Translations> = { es, en };
+
+/**
+ * Convierte un motivo de riesgo semántico en texto del idioma activo.
+ * El comando generado nunca pasa por aquí: solo se traducen los motivos.
+ */
+export function formatRiskReason(reason: RiskReason, t: Translations): string {
+  if (reason.code === 'ai-higher-risk') {
+    return t.risk.aiHigher(t.risk.labels[reason.level]);
+  }
+  return t.risk.reasons[reason.code];
+}
 
 /** Español por defecto; respeta la preferencia guardada si existe. */
 export function getInitialLanguage(): Language {

@@ -157,4 +157,63 @@ describe('Risk Engine', () => {
     expect(assessRisk('kubectl delete namespace production').level).toBe('critical');
     expect(assessRisk('kubectl replace --force -f deployment.yaml').level).toBe('critical');
   });
+
+  // --- Códigos semánticos de motivo (independientes del idioma) ---
+  describe('códigos de motivo', () => {
+    it('un comando de lectura produce únicamente read-only', () => {
+      const result = assessRisk('git status');
+      expect(result.reasons).toEqual(['read-only']);
+    });
+
+    it('un comando destructivo produce destructive-operation', () => {
+      const result = assessRisk('rm archivo.txt');
+      expect(result.reasons).toContain('destructive-operation');
+      expect(result.reasons).not.toContain('read-only');
+    });
+
+    it('asigna el código correspondiente a cada regla', () => {
+      expect(assessRisk('docker restart web').reasons).toEqual(['state-modification']);
+      expect(assessRisk('mkdir logs').reasons).toEqual(['local-modification']);
+      expect(assessRisk('ls | xargs echo').reasons).toEqual(['bulk-operation']);
+      expect(assessRisk('sudo apt update').reasons).toEqual(['elevated-privileges']);
+    });
+
+    it('acumula varios códigos en el orden de evaluación', () => {
+      const result = assessRisk('docker stop $(docker ps -q)');
+      expect(result.reasons).toEqual(['state-modification', 'bulk-operation']);
+      expect(result.level).toBe('medium');
+    });
+
+    it('nunca emite frases localizadas como motivo', () => {
+      const commands = [
+        'git status', 'git commit -m "x"', 'docker stop web', 'rm -rf /',
+        'sudo rm -rf /var', 'docker stop $(docker ps -q)', 'kubectl apply -f d.yaml',
+      ];
+      for (const command of commands) {
+        for (const reason of assessRisk(command).reasons) {
+          expect(reason).toMatch(/^[a-z]+(?:-[a-z]+)*$/);
+        }
+      }
+    });
+  });
+
+  // --- Clasificación preservada tras la migración a códigos ---
+  it('mantiene la clasificación y puntuación existentes', () => {
+    const expected: Array<[string, string, number]> = [
+      ['git status', 'read', 0],
+      ['git add .', 'low', 2],
+      ['git branch -a', 'low', 2],
+      ['git push origin main', 'medium', 4],
+      ['sudo apt update', 'medium', 4],
+      ['docker stop $(docker ps -q)', 'medium', 6],
+      ['sudo git push --all', 'critical', 8],
+      ['rm -rf /', 'critical', 8],
+      ['git reset --hard', 'critical', 8],
+    ];
+    for (const [command, level, score] of expected) {
+      const result = assessRisk(command);
+      expect({ command, level: result.level, score: result.score })
+        .toEqual({ command, level, score });
+    }
+  });
 });
