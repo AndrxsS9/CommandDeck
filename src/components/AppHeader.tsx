@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ThemeToggle } from './ThemeToggle';
+import { HistoryTrigger } from './HistoryTrigger';
 import { useI18n } from '../i18n/LanguageContext';
 import { useAuth } from '../auth/AuthContext';
 import { mapAuthError } from '../auth/authService';
@@ -7,9 +8,12 @@ import { mapAuthError } from '../auth/authService';
 interface AppHeaderProps {
   theme: 'dark' | 'light';
   onToggleTheme: () => void;
+  historyCount: number;
+  historyOpen: boolean;
+  onOpenHistory: () => void;
 }
 
-export function AppHeader({ theme, onToggleTheme }: AppHeaderProps) {
+export function AppHeader({ theme, onToggleTheme, historyCount, historyOpen, onOpenHistory }: AppHeaderProps) {
   const { language, setLanguage, t } = useI18n();
   const { user, signOut } = useAuth();
   const [signingOut, setSigningOut] = useState(false);
@@ -54,6 +58,7 @@ export function AppHeader({ theme, onToggleTheme }: AppHeaderProps) {
 
       {/* Actions */}
       <div className="app-header__actions">
+        <HistoryTrigger count={historyCount} open={historyOpen} onClick={onOpenHistory} />
         <button
           id="language-toggle"
           className="lang-toggle"

@@ -1,4 +1,4 @@
-import { FormEvent, useState, useEffect, useRef } from 'react';
+import { FormEvent, useState, useEffect, useRef, useCallback } from 'react';
 import { writeText } from '@tauri-apps/plugin-clipboard-manager';
 import { listen } from '@tauri-apps/api/event';
 import { generateCommand } from './services/commandService';
@@ -14,6 +14,7 @@ import { ErrorState } from './components/ErrorState';
 import { useI18n } from './i18n/LanguageContext';
 import { ToolIcon } from './components/ToolIcon';
 import type { Theme } from './hooks/useTheme';
+import { useHistory } from './hooks/useHistory';
 
 interface AppProps {
   /** Id del usuario autenticado (Supabase). */
@@ -32,8 +33,18 @@ function App({ userId, theme, onToggleTheme }: AppProps) {
   const [errorMsg, setErrorMsg] = useState('');
   const [status, setStatus] = useState<keyof typeof t.status | null>(null);
   const [copied, setCopied] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const historyEntries = useHistory(userId);
 
   const commandInputRef = useRef<CommandInputHandle>(null);
+
+  const closeHistory = useCallback(() => setHistoryOpen(false), []);
+
+  const reuseFromHistory = useCallback((reusedIntent: string) => {
+    setIntent(reusedIntent);
+    setHistoryOpen(false);
+    commandInputRef.current?.focus();
+  }, []);
 
   // Escuchar evento de foco desde el HotKey de Tauri
   useEffect(() => {
@@ -95,9 +106,12 @@ function App({ userId, theme, onToggleTheme }: AppProps) {
 
   return (
     <div className="app-layout">
-      <AppHeader 
-        theme={theme} 
-        onToggleTheme={onToggleTheme} 
+      <AppHeader
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+        historyCount={historyEntries.length}
+        historyOpen={historyOpen}
+        onOpenHistory={() => setHistoryOpen(true)}
       />
 
       <div className="app-body">
@@ -161,9 +175,15 @@ function App({ userId, theme, onToggleTheme }: AppProps) {
             )}
           </div>
         </main>
-
-        <RecentCommands onReuse={setIntent} userId={userId} />
       </div>
+
+      <RecentCommands
+        open={historyOpen}
+        onClose={closeHistory}
+        onReuse={reuseFromHistory}
+        entries={historyEntries}
+        userId={userId}
+      />
     </div>
   );
 }
