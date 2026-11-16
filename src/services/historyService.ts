@@ -1,13 +1,34 @@
-import type { CommandTool, RiskLevel } from '../types/command';
+import type { CommandTool, LocalizedText, RiskLevel } from '../types/command';
+import type { Language } from '../i18n/translations';
 
 export interface HistoryEntry {
   id: string;
   intent: string;
   command: string;
   tool: CommandTool;
-  desc: string;
+  /**
+   * Descripción en un solo idioma.
+   * Los registros anteriores a la versión bilingüe solo tienen este campo.
+   */
+  desc?: string;
+  /** Descripción en ES y EN (registros nuevos). */
+  descByLanguage?: LocalizedText;
   risk: RiskLevel;
   timestamp: number;
+}
+
+/**
+ * Descripción del registro en el idioma activo.
+ *
+ * Usa la versión bilingüe si existe y es válida; si no (registros
+ * antiguos o datos corruptos en localStorage), recurre a `desc`.
+ */
+export function getHistoryDescription(entry: HistoryEntry, language: Language): string | undefined {
+  const localized = entry.descByLanguage?.[language];
+  if (typeof localized === 'string' && localized.trim()) {
+    return localized;
+  }
+  return typeof entry.desc === 'string' && entry.desc ? entry.desc : undefined;
 }
 
 const GLOBAL_HISTORY_KEY = 'commanddeck_history';

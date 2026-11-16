@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { clearHistory, type HistoryEntry } from '../services/historyService';
+import { clearHistory, getHistoryDescription, type HistoryEntry } from '../services/historyService';
 import { useI18n } from '../i18n/LanguageContext';
 import type { Translations } from '../i18n/translations';
 import { ToolIcon, type ToolIconName } from './ToolIcon';
@@ -29,6 +29,17 @@ function formatRecentDate(ts: number, t: Translations) {
     return `${t.recent.today}, ${date.toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' })}`;
   }
   return date.toLocaleDateString(locale, { month: 'short', day: 'numeric' });
+}
+
+/**
+ * Descripción del registro en el idioma activo.
+ * Los registros antiguos (solo `desc`) siguen mostrándose tal cual.
+ */
+function RecentItemDescription({ entry }: { entry: HistoryEntry }) {
+  const { language } = useI18n();
+  const desc = getHistoryDescription(entry, language);
+  if (!desc) return null;
+  return <p className="recent-item__desc" title={desc}>{desc}</p>;
 }
 
 /** Drawer lateral derecho con el historial del usuario autenticado. */
@@ -167,9 +178,7 @@ export function RecentCommands({ open, onClose, onReuse, entries, userId }: Rece
                     <span className="recent-item__time">{formatRecentDate(item.timestamp, t)}</span>
                   </div>
                   <code className="recent-item__command">{item.command}</code>
-                  {item.desc && (
-                    <p className="recent-item__desc" title={item.desc}>{item.desc}</p>
-                  )}
+                  <RecentItemDescription entry={item} />
                   <div className="recent-item__footer">
                     <button
                       type="button"

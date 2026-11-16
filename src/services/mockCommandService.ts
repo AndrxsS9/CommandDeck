@@ -1,5 +1,7 @@
 import type {
   CommandSuggestion,
+  LocalizedExplanation,
+  LocalizedText,
   RiskLevel,
 } from '../types/command';
 
@@ -36,13 +38,21 @@ export async function generateMockSuggestion(
 
   let tool: CommandSuggestion['tool'] = 'git';
 
-  let summary =
-  'Muestra el estado actual del repositorio Git.';
+  let summary: LocalizedText = {
+    es: 'Muestra el estado actual del repositorio Git.',
+    en: 'Shows the current state of the Git repository.',
+  };
 
-  let explanation = [
-  'git: ejecuta el cliente de Git.',
-  'status: muestra la rama actual y el estado de los archivos.',
-  ];
+  let explanation: LocalizedExplanation = {
+    es: [
+      'git: ejecuta el cliente de Git.',
+      'status: muestra la rama actual y el estado de los archivos.',
+    ],
+    en: [
+      'git: runs the Git client.',
+      'status: shows the current branch and the state of the files.',
+    ],
+  };
 
   let suggestedRisk: RiskLevel = 'read';
 
@@ -58,14 +68,23 @@ export async function generateMockSuggestion(
 
     tool = 'docker';
 
-    summary =
-      'Detiene todos los contenedores Docker actualmente activos.';
+    summary = {
+      es: 'Detiene todos los contenedores Docker actualmente activos.',
+      en: 'Stops all currently running Docker containers.',
+    };
 
-    explanation = [
-      'docker ps -q: obtiene los identificadores de los contenedores activos.',
-      '$(...): utiliza esos identificadores como argumentos.',
-      'docker stop: solicita la detención de cada contenedor.',
-    ];
+    explanation = {
+      es: [
+        'docker ps -q: obtiene los identificadores de los contenedores activos.',
+        '$(...): utiliza esos identificadores como argumentos.',
+        'docker stop: solicita la detención de cada contenedor.',
+      ],
+      en: [
+        'docker ps -q: gets the IDs of the running containers.',
+        '$(...): uses those IDs as arguments.',
+        'docker stop: requests each container to stop.',
+      ],
+    };
 
     suggestedRisk = 'medium';
   }
@@ -82,13 +101,21 @@ export async function generateMockSuggestion(
 
     tool = 'docker';
 
-    summary =
-      'Lista los contenedores Docker actualmente activos.';
+    summary = {
+      es: 'Lista los contenedores Docker actualmente activos.',
+      en: 'Lists the currently running Docker containers.',
+    };
 
-    explanation = [
-      'docker: ejecuta el cliente de Docker.',
-      'ps: muestra los contenedores en ejecución.',
-    ];
+    explanation = {
+      es: [
+        'docker: ejecuta el cliente de Docker.',
+        'ps: muestra los contenedores en ejecución.',
+      ],
+      en: [
+        'docker: runs the Docker client.',
+        'ps: shows the running containers.',
+      ],
+    };
 
     suggestedRisk = 'read';
   }
@@ -109,13 +136,21 @@ export async function generateMockSuggestion(
 
     tool = 'git';
 
-    summary =
-      'Lista las ramas locales del repositorio.';
+    summary = {
+      es: 'Lista las ramas locales del repositorio.',
+      en: 'Lists the local branches of the repository.',
+    };
 
-    explanation = [
-      'git: ejecuta Git.',
-      'branch: muestra las ramas locales.',
-    ];
+    explanation = {
+      es: [
+        'git: ejecuta Git.',
+        'branch: muestra las ramas locales.',
+      ],
+      en: [
+        'git: runs Git.',
+        'branch: shows the local branches.',
+      ],
+    };
 
     suggestedRisk = 'read';
   }
@@ -134,14 +169,23 @@ export async function generateMockSuggestion(
 
     tool = 'git';
 
-    summary =
-      'Crea una nueva rama y cambia hacia ella.';
+    summary = {
+      es: 'Crea una nueva rama y cambia hacia ella.',
+      en: 'Creates a new branch and switches to it.',
+    };
 
-    explanation = [
-      'git switch: cambia entre ramas.',
-      '-c: indica que debe crear una nueva rama.',
-      'nueva-rama: representa el nombre de la nueva rama.',
-    ];
+    explanation = {
+      es: [
+        'git switch: cambia entre ramas.',
+        '-c: indica que debe crear una nueva rama.',
+        'nueva-rama: representa el nombre de la nueva rama.',
+      ],
+      en: [
+        'git switch: switches between branches.',
+        '-c: indicates that a new branch must be created.',
+        'nueva-rama: represents the name of the new branch.',
+      ],
+    };
 
     suggestedRisk = 'low';
   }
@@ -159,15 +203,25 @@ export async function generateMockSuggestion(
 
     tool = 'git';
 
-    summary =
-      'Elimina ramas locales que ya fueron fusionadas.';
+    summary = {
+      es: 'Elimina ramas locales que ya fueron fusionadas.',
+      en: 'Deletes local branches that have already been merged.',
+    };
 
-    explanation = [
-      'git branch --merged: obtiene las ramas ya fusionadas.',
-      'grep -v "*": excluye la rama actualmente activa.',
-      'xargs: procesa cada resultado.',
-      'git branch -d: elimina cada rama usando la opción segura de Git.',
-    ];
+    explanation = {
+      es: [
+        'git branch --merged: obtiene las ramas ya fusionadas.',
+        'grep -v "*": excluye la rama actualmente activa.',
+        'xargs: procesa cada resultado.',
+        'git branch -d: elimina cada rama usando la opción segura de Git.',
+      ],
+      en: [
+        'git branch --merged: gets the already merged branches.',
+        'grep -v "*": excludes the currently active branch.',
+        'xargs: processes each result.',
+        'git branch -d: deletes each branch using the safe Git option.',
+      ],
+    };
 
     suggestedRisk = 'medium';
   }
@@ -180,13 +234,21 @@ export async function generateMockSuggestion(
 
     tool = 'git';
 
-    summary =
-      'Muestra el estado actual del repositorio Git.';
+    summary = {
+      es: 'Muestra el estado actual del repositorio Git.',
+      en: 'Shows the current state of the Git repository.',
+    };
 
-    explanation = [
-      'git: ejecuta Git.',
-      'status: muestra cambios pendientes y la rama actual.',
-    ];
+    explanation = {
+      es: [
+        'git: ejecuta Git.',
+        'status: muestra cambios pendientes y la rama actual.',
+      ],
+      en: [
+        'git: runs Git.',
+        'status: shows pending changes and the current branch.',
+      ],
+    };
 
     suggestedRisk = 'read';
   }
