@@ -22,15 +22,47 @@ enum CommandTool {
     Unknown,
 }
 
+/// Texto de presentación generado en ambos idiomas de la interfaz.
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+struct LocalizedText {
+    es: String,
+    en: String,
+}
+
+/// Desglose de parámetros generado en ambos idiomas de la interfaz.
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+struct LocalizedExplanation {
+    es: Vec<String>,
+    en: Vec<String>,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct CommandSuggestion {
     intent: String,
     command: String,
     tool: CommandTool,
-    summary: String,
-    explanation: Vec<String>,
+    summary: LocalizedText,
+    explanation: LocalizedExplanation,
     suggested_risk: RiskLevel,
+}
+
+/// Interpreta el JSON devuelto por Gemini y valida que los textos
+/// de presentación existan en ambos idiomas.
+///
+/// La intención se reemplaza por la petición original del usuario:
+/// nunca se usa una versión traducida o reescrita por el modelo.
+fn parse_suggestion(output_text: &str, original_intent: &str) -> Result<CommandSuggestion, String> {
+    let mut suggestion: CommandSuggestion = serde_json::from_str(output_text)
+        .map_err(|e| format!("JSON inválido: {}", e))?;
+
+    if suggestion.summary.es.trim().is_empty() || suggestion.summary.en.trim().is_empty() {
+        return Err("summary debe incluir texto en es y en".to_string());
+    }
+
+    suggestion.intent = original_intent.to_string();
+
+    Ok(suggestion)
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -128,37 +160,77 @@ Reglas:
 10. Si preferredTool = "auto", determina la herramienta adecuada entre git, docker, kubernetes o system según la intención. De lo contrario, úsala como preferencia explícita.
 11. Si preferredTool = "kubernetes" o la intención lo requiere, prioriza comandos `kubectl` (e.g. `kubectl get pods`). No ejecutes nada, solo sugiere el comando adecuado.
 
-Devuelve únicamente JSON válido.
+Reglas de idioma (obligatorias):
+
+12. Devuelve SIEMPRE `summary` en dos idiomas: `summary.es` (español) y `summary.en` (inglés).
+13. Devuelve SIEMPRE `explanation` en dos idiomas: `explanation.es` (lista en español) y `explanation.en` (lista en inglés).
+14. Ambos idiomas deben expresar exactamente el mismo significado. `explanation.es` y `explanation.en` deben tener los mismos elementos, en el mismo orden.
+15. Los tokens reales del comando (por ejemplo `git`, `branch`, `kubectl`, `get`, flags, rutas, nombres de recursos) NUNCA se traducen: aparecen idénticos en ambos idiomas.
+16. El campo `command` es único y jamás se traduce.
+17. `intent` debe conservar exactamente la petición original del usuario, sin traducirla ni reformularla.
+18. El idioma en que está escrita la petición NO decide el idioma de `summary` ni de `explanation`: ambos idiomas se generan siempre.
+
+Devuelve únicamente JSON válido, sin texto adicional ni bloques de código.
 
 La estructura debe ser exactamente:
 
 {
-  "intent": "texto original",
+  "intent": "petición original sin modificar",
   "command": "comando",
   "tool": "git | docker | kubernetes | system | unknown",
-  "summary": "explicación breve",
-  "explanation": [
-    "parte 1",
-    "parte 2"
-  ],
+  "summary": {
+    "es": "explicación breve en español",
+    "en": "brief explanation in English"
+  },
+  "explanation": {
+    "es": [
+      "token → explicación en español"
+    ],
+    "en": [
+      "token → explanation in English"
+    ]
+  },
   "suggestedRisk": "read | low | medium | critical"
+}
+
+Ejemplo:
+
+{
+  "intent": "List Kubernetes pods",
+  "command": "kubectl get pods",
+  "tool": "kubernetes",
+  "summary": {
+    "es": "Lista todos los pods del namespace actual de Kubernetes.",
+    "en": "Lists all pods in the current Kubernetes namespace."
+  },
+  "explanation": {
+    "es": [
+      "kubectl → Herramienta de línea de comandos de Kubernetes.",
+      "get → Subcomando para obtener recursos.",
+      "pods → Tipo de recurso que se mostrará."
+    ],
+    "en": [
+      "kubectl → The Kubernetes command-line tool.",
+      "get → Subcommand used to retrieve resources.",
+      "pods → The resource type to display."
+    ]
+  },
+  "suggestedRisk": "read"
 }
 "#;
 
-    let language_name = if language == "es" {
-        "Spanish"
-    } else {
-        "English"
-    };
+    // El idioma activo de la interfaz ya no condiciona la generación:
+    // Gemini devuelve siempre ES y EN y la UI elige al renderizar.
+    // El parámetro se conserva para no romper el contrato IPC existente.
+    let _ = language;
 
     let prompt = format!(
-        "{}\n\nContexto:\nSistema Operativo: {}\nShell: {}\nHerramienta preferida: {}\n\nPetición del usuario:\n{}\n\nIMPORTANT LANGUAGE RULE:\nThe `summary` and every string inside `explanation` MUST be written exclusively in the requested response language.\nRequested language: {}\nThe `command` itself must NEVER be translated.",
+        "{}\n\nContexto:\nSistema Operativo: {}\nShell: {}\nHerramienta preferida: {}\n\nPetición del usuario:\n{}",
         system_prompt,
         platform,
         shell,
         preferred_tool,
-        intent,
-        language_name
+        intent
     );
 
     let body = json!({
@@ -260,7 +332,7 @@ La estructura debe ser exactamente:
         .and_then(|part| part["text"].as_str())
         .ok_or_else(|| "Gemini no devolvió contenido válido.".to_string())?;
 
-    let result: CommandSuggestion = serde_json::from_str(output_text).map_err(|e| {
+    let result = parse_suggestion(output_text, &intent).map_err(|e| {
         eprintln!("[CommandDeck] Respuesta JSON de Gemini inválida: {}", e);
 
         "Gemini respondió con un formato no válido. Intenta nuevamente.".to_string()
@@ -337,4 +409,75 @@ pub fn run() {
         .expect(
             "error while running tauri application"
         );
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const BILINGUAL_RESPONSE: &str = r#"{
+        "intent": "List Kubernetes pods",
+        "command": "kubectl get pods",
+        "tool": "kubernetes",
+        "summary": {
+            "es": "Lista todos los pods del namespace actual de Kubernetes.",
+            "en": "Lists all pods in the current Kubernetes namespace."
+        },
+        "explanation": {
+            "es": ["kubectl → Herramienta de línea de comandos de Kubernetes.", "get → Subcomando para obtener recursos."],
+            "en": ["kubectl → The Kubernetes command-line tool.", "get → Subcommand used to retrieve resources."]
+        },
+        "suggestedRisk": "read"
+    }"#;
+
+    #[test]
+    fn parsea_summary_y_explanation_bilingues() {
+        let s = parse_suggestion(BILINGUAL_RESPONSE, "List Kubernetes pods").unwrap();
+        assert_eq!(s.command, "kubectl get pods");
+        assert_eq!(s.tool, CommandTool::Kubernetes);
+        assert_eq!(s.suggested_risk, RiskLevel::Read);
+        assert_eq!(s.summary.es, "Lista todos los pods del namespace actual de Kubernetes.");
+        assert_eq!(s.summary.en, "Lists all pods in the current Kubernetes namespace.");
+        assert_eq!(s.explanation.es.len(), 2);
+        assert_eq!(s.explanation.en.len(), 2);
+        assert!(s.explanation.en[0].starts_with("kubectl"));
+    }
+
+    #[test]
+    fn conserva_la_intencion_original_aunque_gemini_la_traduzca() {
+        let s = parse_suggestion(BILINGUAL_RESPONSE, "listar pods de kubernetes").unwrap();
+        assert_eq!(s.intent, "listar pods de kubernetes");
+        assert_eq!(s.command, "kubectl get pods");
+    }
+
+    #[test]
+    fn rechaza_el_formato_monolingue_anterior() {
+        let legacy = r#"{
+            "intent": "estado",
+            "command": "git status",
+            "tool": "git",
+            "summary": "Muestra el estado.",
+            "explanation": ["git → Git."],
+            "suggestedRisk": "read"
+        }"#;
+        assert!(parse_suggestion(legacy, "estado").is_err());
+    }
+
+    #[test]
+    fn rechaza_summary_vacio_en_algun_idioma() {
+        let missing_en = BILINGUAL_RESPONSE.replace(
+            "Lists all pods in the current Kubernetes namespace.",
+            "  ",
+        );
+        assert!(parse_suggestion(&missing_en, "pods").is_err());
+    }
+
+    #[test]
+    fn serializa_en_camel_case_para_el_frontend() {
+        let s = parse_suggestion(BILINGUAL_RESPONSE, "pods").unwrap();
+        let value = serde_json::to_value(&s).unwrap();
+        assert_eq!(value["suggestedRisk"], "read");
+        assert_eq!(value["summary"]["en"], "Lists all pods in the current Kubernetes namespace.");
+        assert!(value["explanation"]["es"].is_array());
+    }
 }
