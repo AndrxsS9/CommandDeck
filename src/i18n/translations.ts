@@ -28,6 +28,32 @@ const es = {
     subtitle: 'Genera, analiza el riesgo e inspecciona comandos de infraestructura.',
     compat: 'Compatible con:',
   },
+  /** Indicadores visuales de contexto (estáticos, sin lógica asociada). */
+  context: {
+    ariaLabel: 'Contexto del sistema',
+    geminiReady: 'Gemini listo',
+    autoMode: 'Modo automático',
+  },
+  quickActions: {
+    title: 'Acciones rápidas',
+    subtitle: 'Plantillas de texto para completar el traductor (no ejecutan comandos).',
+    use: 'Usar',
+    items: {
+      git: {
+        subtitle: 'Ver estado del repositorio',
+        intent: 'Mostrar el estado actual del repositorio Git',
+      },
+      docker: {
+        subtitle: 'Listar contenedores activos',
+        intent: 'Listar los contenedores Docker activos',
+      },
+      kubernetes: {
+        subtitle: 'Listar pods',
+        intent: 'Listar los pods de Kubernetes',
+      },
+    },
+  },
+  notice: 'CommandDeck convierte texto natural en propuestas de comandos y evalúa el riesgo antes de actuar.',
   input: {
     title: '✨ Traductor en Lenguaje Natural',
     subtitle: 'Convierte lo que necesitas en un comando listo para revisar.',
@@ -191,6 +217,31 @@ const en: Translations = {
     subtitle: 'Generate, assess risk and inspect infrastructure commands.',
     compat: 'Compatible with:',
   },
+  context: {
+    ariaLabel: 'System context',
+    geminiReady: 'Gemini ready',
+    autoMode: 'Automatic mode',
+  },
+  quickActions: {
+    title: 'Quick actions',
+    subtitle: 'Text templates to fill in the translator (they do not run commands).',
+    use: 'Use',
+    items: {
+      git: {
+        subtitle: 'View repository status',
+        intent: 'Show the current status of the Git repository',
+      },
+      docker: {
+        subtitle: 'List running containers',
+        intent: 'List the running Docker containers',
+      },
+      kubernetes: {
+        subtitle: 'List pods',
+        intent: 'List the Kubernetes pods',
+      },
+    },
+  },
+  notice: 'CommandDeck turns natural language into command proposals and assesses risk before acting.',
   input: {
     title: '✨ Natural Language Translator',
     subtitle: 'Turn what you need into a command ready for review.',
