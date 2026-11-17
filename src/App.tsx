@@ -13,6 +13,8 @@ import { LoadingState } from './components/LoadingState';
 import { ErrorState } from './components/ErrorState';
 import { useI18n } from './i18n/LanguageContext';
 import { ToolIcon } from './components/ToolIcon';
+import { SystemContext } from './components/SystemContext';
+import { QuickActions } from './components/QuickActions';
 import type { Theme } from './hooks/useTheme';
 import { useHistory } from './hooks/useHistory';
 
@@ -43,6 +45,12 @@ function App({ userId, theme, onToggleTheme }: AppProps) {
   const reuseFromHistory = useCallback((reusedIntent: string) => {
     setIntent(reusedIntent);
     setHistoryOpen(false);
+    commandInputRef.current?.focus();
+  }, []);
+
+  // Acciones rápidas: solo rellenan el traductor; no generan ni ejecutan nada.
+  const applyQuickAction = useCallback((quickIntent: string) => {
+    setIntent(quickIntent);
     commandInputRef.current?.focus();
   }, []);
 
@@ -132,6 +140,7 @@ function App({ userId, theme, onToggleTheme }: AppProps) {
                   <div className="compat-badge"><ToolIcon name="system" /> {t.tools.system}</div>
                 </div>
               </div>
+              <SystemContext />
             </div>
 
             <CommandInput
@@ -169,7 +178,18 @@ function App({ userId, theme, onToggleTheme }: AppProps) {
                 </p>
               </div>
             )}
-            
+
+            <QuickActions onUse={applyQuickAction} />
+
+            <div className="info-notice" role="note">
+              <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="16" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12.01" y2="8" />
+              </svg>
+              <p>{t.notice}</p>
+            </div>
+
             {status && (
               <div className="status-bar">{t.status[status]}</div>
             )}
