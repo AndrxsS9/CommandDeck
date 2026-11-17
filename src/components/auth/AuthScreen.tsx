@@ -23,7 +23,7 @@ export function AuthBrand() {
         </svg>
       </div>
       <span className="auth-brand__name">CommandDeck</span>
-      <span className="app-header__version">v0.1.2</span>
+      <span className="app-header__version">v0.1.3</span>
     </div>
   );
 }
